@@ -1,0 +1,18 @@
+{
+"Host"     		: "192.168.1.101",
+"Archivio" 		: "Medietica",
+"DbPort"   		: 5432,
+"User"     		: "postgres",
+"Password" 		: "$rsa_software_1995$",
+"TcpPort"  		: 4059,
+"CacheUtenti" 	: 30,
+"DurataToken" 	: 180,
+"DbType" 		: 1,
+"DocPath"		: "d:/Medietica",
+"EmailTemplate"	: "C:/RSA.NET/MedieticaWepApiServices/MedieticaWebApiService/email_template",
+"SmtpServer"	: "mail.rsaweb.com",
+"SmtpPort"		: 465,
+"SmtpUser"		: "capizzi@rsaweb.com",
+"SmtpPassword"	: "rsa_software_1995",
+"SmtpSsl"		: true
+}

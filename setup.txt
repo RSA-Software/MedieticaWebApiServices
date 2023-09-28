@@ -1,0 +1,4 @@
+sc create FacileWebApiServiceDimef binPath= C:\FacileWepApiServices\Dimef\FacileWebApiService.exe start= auto DisplayName= "FacileWebApiServiceDimef"
+sc create FacileWebApiServiceGiprof binPath= C:\FacileWepApiServices\Giprof\FacileWebApiService.exe start= auto DisplayName= "FacileWebApiServiceGiprof"
+sc create FacileWebApiServiceDalia binPath= C:\FacileWepApiServices\Dalia\FacileWebApiService.exe start= auto DisplayName= "FacileWebApiServiceDalia"
+pause

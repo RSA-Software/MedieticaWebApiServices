@@ -1,0 +1,15 @@
+{
+"Host"     : "192.168.1.101",
+"Archivio" : "RSATEST",
+"DbPort"   : 6597,
+"User"     : "ADMIN",
+"Password" : "ADMIN",
+"Ditta"    : 1,
+"Anno"     : 0,
+"Deposito" : 1,
+"Registro" : "A",
+"TcpPort"  : 4059,
+"Sezione"  : 1,   
+"CacheUtenti" : 30,
+"SmsText"  : ""
+}
