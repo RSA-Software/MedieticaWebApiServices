@@ -220,6 +220,8 @@
     <Compile Include="Controller\DipendentiGiornaleController.cs" />
     <Compile Include="Controller\CertificatiPagamentoController.cs" />
     <Compile Include="Controller\DownloadPasswordController.cs" />
+    <Compile Include="Controller\AttivitaController.cs" />
+    <Compile Include="Controller\TipologieAttivitaController.cs" />
     <Compile Include="Controller\PersoneGiuridicheController.cs" />
     <Compile Include="Controller\VisiteDipendentiController.cs" />
     <Compile Include="Controller\GiornaleLavoriController.cs" />
@@ -291,6 +293,8 @@
     <Compile Include="Models\DipSediDb.cs" />
     <Compile Include="Models\DipVisiteDb.cs" />
     <Compile Include="Models\DownloadPasswordDb.cs" />
+    <Compile Include="Models\AttivitaDb.cs" />
+    <Compile Include="Models\TipologieAttivitaDb.cs" />
     <Compile Include="Models\PersoneGiuridicheDb.cs" />
     <Compile Include="Models\SediDitteDb.cs" />
     <Compile Include="Models\ModSerialDb.cs" />

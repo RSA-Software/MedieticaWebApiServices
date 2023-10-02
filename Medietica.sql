@@ -22,9 +22,6 @@ CREATE TABLE IF NOT EXISTS utenti (
 	CONSTRAINT ute_codice PRIMARY KEY (ute_codice)
 );
 
-ALTER TABLE utenti
-ADD COLUMN IF NOT EXISTS ute_type INTEGER NOT NULL DEFAULT 0;
-
 CREATE INDEX IF NOT EXISTS ute_desc_idx ON utenti (ute_desc);
 CREATE UNIQUE INDEX IF NOT EXISTS ute_email_idx ON utenti (ute_email, ute_password);
 
@@ -69,6 +66,45 @@ VALUES (2, 'SILVIO', 'RICCIUTELLI', 'silvio.ricci.rsa@gmail.com',  'silvio', 4);
 
 INSERT INTO utenti (ute_codice, ute_rag_soc1, ute_rag_soc2, ute_email, ute_password, ute_level )
 VALUES (3, 'MANNO', 'ANDREA', 'andream.rsaweb@gmail.com',  'andrea', 4);
+
+/*
+	Tabella Immagini Utenti
+*/
+CREATE TABLE IF NOT EXISTS imgutenti
+(
+	img_dit			INTEGER NOT NULL DEFAULT 0,
+	img_codice		INTEGER NOT NULL CHECK(img_codice > 0),
+	img_formato		SMALLINT NOT NULL DEFAULT 0,
+	img_tipo		SMALLINT NOT NULL DEFAULT 0,
+	img_bytes_size	INTEGER NOT NULL DEFAULT 0,
+	img_created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_last_update	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_data		BYTEA,
+	CONSTRAINT imu_codice PRIMARY KEY (img_dit, img_codice, img_formato)
+);
+
+CREATE OR REPLACE FUNCTION imu_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.img_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.img_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'imu_trigger') THEN
+			CREATE TRIGGER imu_trigger
+			BEFORE INSERT OR UPDATE ON imgutenti
+			FOR EACH ROW
+			EXECUTE PROCEDURE imu_trigger_function();
+		END IF;
+	END
+$$;
+
 
 /*
 *	Creazione Tabella UserGrops
@@ -134,7 +170,10 @@ INSERT INTO usergroups (usg_codice, usg_desc )
 VALUES (1, 'Amministrazione');
 
 INSERT INTO usergroups (usg_codice, usg_desc )
-VALUES (2, 'Rivenditori');
+VALUES (2, 'Commerciali');
+
+INSERT INTO usergroups (usg_codice, usg_desc )
+VALUES (3, 'Gestori');
 
 
 /*
@@ -293,14 +332,6 @@ CREATE TABLE IF NOT EXISTS uteusg
 CREATE INDEX IF NOT EXISTS utg_usg ON uteusg (utg_usg);
 CREATE INDEX IF NOT EXISTS utg_ute ON uteusg (utg_ute);
 
-ALTER TABLE uteusg
-	DROP CONSTRAINT utg_usg_fkey;
-
-ALTER TABLE uteusg
-	ADD CONSTRAINT utg_usg_fkey FOREIGN KEY (utg_usg) REFERENCES usergroups (usg_codice) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
-
 CREATE OR REPLACE FUNCTION utg_trigger_function()
 RETURNS TRIGGER AS $$
 	BEGIN
@@ -323,18 +354,16 @@ DO $$
 	END
 $$;
 
-
-
 /*
 *	Creazione Tabella gruppi
 */
 CREATE TABLE IF NOT EXISTS gruppi
 (
-	gru_codice 		    INTEGER NOT NULL DEFAULT 1,
+	gru_codice			BIGSERIAL PRIMARY KEY,
 	gru_desc			VARCHAR (50) NOT NULL DEFAULT '',
 	gru_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	gru_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT gru_codice PRIMARY KEY (gru_codice)
+	gru_user			INTEGER
 );
 CREATE INDEX gru_desc ON gruppi (gru_desc, gru_codice);
 
@@ -390,12 +419,8 @@ CREATE TABLE IF NOT EXISTS ditte
 	dit_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	dit_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT dit_codice PRIMARY KEY (dit_codice),
-	CONSTRAINT dit_gru_fkey FOREIGN KEY (dit_gru) REFERENCES gruppi (gru_codice) ON UPDATE CASCADE ON DELETE RESTRICT,
-	CONSTRAINT dit_riv_fkey FOREIGN KEY (dit_riv) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE INDEX dit_desc ON ditte (dit_desc, dit_codice);
-CREATE INDEX dit_gru ON ditte (dit_gru);
-CREATE INDEX dit_riv ON ditte (dit_riv);
 
 CREATE OR REPLACE FUNCTION dit_trigger_function()
 RETURNS TRIGGER AS $$
@@ -426,11 +451,6 @@ RETURNS TRIGGER AS $$
         	NEW.dit_created_at	= NOW();
         END IF;
         EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I PARTITION OF allegati FOR VALUES IN (%s)', 'allegati_' || NEW.dit_codice::TEXT, NEW.dit_codice);
-        EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I PARTITION OF imgmezzi FOR VALUES IN (%s)', 'imgmezzi_' || NEW.dit_codice::TEXT, NEW.dit_codice);
-	    EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I PARTITION OF imgmodelli FOR VALUES IN (%s)', 'imgmodelli_' || NEW.dit_codice::TEXT, NEW.dit_codice);
-	    EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I PARTITION OF imgdipendenti FOR VALUES IN (%s)', 'imgdipendenti_' || NEW.dit_codice::TEXT, NEW.dit_codice);
-	    EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I PARTITION OF imgcantieri FOR VALUES IN (%s)', 'imgcantieri_' || NEW.dit_codice::TEXT, NEW.dit_codice);
-	    EXECUTE FORMAT('CREATE TABLE IF NOT EXISTS %I PARTITION OF giornaleimg FOR VALUES IN (%s)', 'giornaleimg_' || NEW.dit_codice::TEXT, NEW.dit_codice);
 		RETURN NEW;
 	END;
 $$ language 'plpgsql';
@@ -440,16 +460,6 @@ RETURNS TRIGGER AS $$
 	BEGIN
        	EXECUTE FORMAT('ALTER TABLE allegati DETACH PARTITION %I', 'allegati_' || OLD.dit_codice::TEXT);
        	EXECUTE FORMAT('DROP TABLE %I', 'allegati_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('ALTER TABLE imgmezzi DETACH PARTITION %I', 'imgmezzi_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('DROP TABLE %I', 'imgmezzi_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('ALTER TABLE imgmodelli DETACH PARTITION %I', 'imgmodelli_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('DROP TABLE %I', 'imgmodelli_' || OLD.dit_codice::TEXT);
-	    EXECUTE FORMAT('ALTER TABLE imgdipendenti DETACH PARTITION %I', 'imgdipendenti_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('DROP TABLE %I', 'imgdipendenti_' || OLD.dit_codice::TEXT);
-	    EXECUTE FORMAT('ALTER TABLE imgcantieri DETACH PARTITION %I', 'imgcantieri_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('DROP TABLE %I', 'imgcantieri_' || OLD.dit_codice::TEXT);
-	    EXECUTE FORMAT('ALTER TABLE giornaleimg DETACH PARTITION %I', 'giornaleimg_' || OLD.dit_codice::TEXT);
-       	EXECUTE FORMAT('DROP TABLE %I', 'giornaleimg_' || OLD.dit_codice::TEXT);
 		RETURN OLD;
 	END;
 $$ language 'plpgsql';
@@ -470,6 +480,196 @@ DO $$
 		END IF;
 	END
 $$;
+
+/*
+	Creazione Tabella Allegati
+
+	all_type = 0 Documenti Clienti
+	all_type = 1 Documenti Fornitori
+	all_type = 2 Documenti Ditta
+	all_type = 3 Documenti Pretiche
+*/
+CREATE TABLE IF NOT EXISTS allegati
+(
+    all_dit			INTEGER NOT NULL,
+    all_type		SMALLINT NOT NULL DEFAULT 0,
+	all_doc			INTEGER NOT NULL,
+	all_idx			INTEGER NOT NULL DEFAULT 0,
+	all_desc		VARCHAR (100) NOT NULL DEFAULT '',
+	all_fname		VARCHAR (260) NOT NULL DEFAULT '',
+	all_local_fname	VARCHAR (260) NOT NULL DEFAULT '',
+	all_bytes_size	BIGINT NOT NULL DEFAULT 0,
+	all_date_time	TIMESTAMP DEFAULT NULL,
+	all_created_at	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	all_last_update	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	all_type_doc    INTEGER,
+	all_type_dof    INTEGER,
+	all_type_dod    INTEGER,
+	all_type_dop    INTEGER,
+	CONSTRAINT all_codice PRIMARY KEY (all_dit, all_type, all_doc, all_idx),
+	CONSTRAINT all_ditte_fkey FOREIGN KEY (all_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE
+)  PARTITION BY LIST (all_dit);
+
+/*
+
+ 	CONSTRAINT all_documenti_fkey FOREIGN KEY (all_dit, all_type_doc) REFERENCES documenti (doc_dit, doc_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_doccantieri_fkey FOREIGN KEY (all_dit, all_type_dca) REFERENCES doccantieri (dca_dit, dca_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT all_docditte_fkey FOREIGN KEY (all_dit, all_type_dod) REFERENCES docditte (dod_dit, dod_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_docmezzi_fkey FOREIGN KEY (all_dit, all_type_dme) REFERENCES docmezzi (dme_dit, dme_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_manutenzioni_fkey FOREIGN KEY (all_dit, all_type_mnt) REFERENCES manutenzioni (mnt_dit, mnt_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_docmodelli_fkey FOREIGN KEY (all_dit, all_type_dmo) REFERENCES docmodelli (dmo_dit, dmo_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_giornale_fkey FOREIGN KEY (all_dit, all_type_gio) REFERENCES giornalelav (gio_dit, gio_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_certificatipag_fkey FOREIGN KEY (all_dit, all_type_cpa) REFERENCES certificatipag (cpa_dit, cpa_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_dipvisite_fkey FOREIGN KEY (all_dit, all_type_dvi) REFERENCES dipvisite (dvi_dit, dvi_codice) ON UPDATE CASCADE ON DELETE CASCADE
+
+ */
+
+CREATE INDEX IF NOT EXISTS all_ditte ON allegati (all_dit);
+CREATE INDEX IF NOT EXISTS all_documenti ON allegati (all_dit, all_type_doc);
+/*
+CREATE INDEX IF NOT EXISTS all_doccantieri ON allegati (all_dit, all_type_dca);
+CREATE INDEX IF NOT EXISTS all_docditte ON allegati (all_dit, all_type_dod);
+CREATE INDEX IF NOT EXISTS all_docmezzi ON allegati (all_dit, all_type_dme);
+CREATE INDEX IF NOT EXISTS all_manutenzioni ON allegati (all_dit, all_type_mnt);
+CREATE INDEX IF NOT EXISTS all_docmodelli ON allegati (all_dit, all_type_dmo);
+CREATE INDEX IF NOT EXISTS all_giornalelav ON allegati (all_dit, all_type_gio);
+CREATE INDEX IF NOT EXISTS all_certificatipag ON allegati (all_dit, all_type_cpa);
+CREATE INDEX IF NOT EXISTS all_dipvisite ON allegati (all_dit, all_type_dvi);
+*/
+
+CREATE OR REPLACE FUNCTION all_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.all_fname		= TRIM(NEW.all_fname);
+		NEW.all_last_update	= NOW();
+	    IF  (TG_OP = 'INSERT') THEN
+           NEW.all_created_at	= NOW();
+    	END IF;
+		IF (NEW.all_type = 0) THEN
+            NEW.all_type_doc = NEW.all_doc;
+            NEW.all_type_doc = NULL;
+            NEW.all_type_dod = NULL;
+            NEW.all_type_dop = NULL;
+        END IF;
+		IF (NEW.all_type = 1) THEN
+            NEW.all_type_doc = NULL;
+            NEW.all_type_doc = NEW.all_doc;
+            NEW.all_type_dod = NULL;
+            NEW.all_type_dop = NULL;
+        END IF;
+		IF (NEW.all_type = 2) THEN
+            NEW.all_type_doc = NULL;
+            NEW.all_type_doc = NULL;
+            NEW.all_type_dod = NEW.all_doc;
+            NEW.all_type_dop = NULL;
+        END IF;
+		IF (NEW.all_type = 3) THEN
+            NEW.all_type_doc = NULL;
+            NEW.all_type_doc = NULL;
+            NEW.all_type_dod = NULL;
+            NEW.all_type_dop = NEW.all_doc;
+        END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'all_trigger') THEN
+			CREATE TRIGGER all_trigger
+			BEFORE INSERT OR UPDATE ON allegati
+			FOR EACH ROW
+			EXECUTE PROCEDURE all_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+	Tabella Immagini ditte
+*/
+CREATE TABLE IF NOT EXISTS imgditte
+(
+	img_dit			INTEGER NOT NULL DEFAULT 0,
+	img_codice		INTEGER NOT NULL,
+	img_formato		SMALLINT NOT NULL DEFAULT 0,
+	img_tipo		SMALLINT NOT NULL DEFAULT 0,
+	img_bytes_size	INTEGER NOT NULL DEFAULT 0,
+	img_created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_last_update	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_data		BYTEA,
+	CONSTRAINT imd_codice PRIMARY KEY (img_dit, img_codice, img_formato),
+	CONSTRAINT imd_dit_fkey FOREIGN KEY (img_codice) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS imd_ditte ON imgditte (img_dit, img_codice);
+
+CREATE OR REPLACE FUNCTION imd_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.img_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.img_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'imd_trigger') THEN
+			CREATE TRIGGER imd_trigger
+			BEFORE INSERT OR UPDATE ON imgditte
+			FOR EACH ROW
+			EXECUTE PROCEDURE imd_trigger_function();
+		END IF;
+	END
+$$;
+
+
+/*
+*	Creazione Tabella Ditte Utenti
+*/
+CREATE TABLE IF NOT EXISTS uteditte
+(
+    utd_dit				INTEGER,
+	utd_ute 		    INTEGER,
+	utd_default			SMALLINT NOT NULL DEFAULT 0,
+	utd_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	utd_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT utd_ditute PRIMARY KEY (utd_dit, utd_ute),
+	CONSTRAINT utd_ditte_fkey FOREIGN KEY (utd_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT utd_utente_fkey FOREIGN KEY (utd_ute) REFERENCES utenti (ute_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX utd_dit ON uteditte (utd_dit);
+CREATE INDEX utd_ute ON uteditte (utd_ute, utd_default);
+
+CREATE OR REPLACE FUNCTION utd_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.utd_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.utd_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'utd_trigger') THEN
+			CREATE TRIGGER utd_trigger
+			BEFORE INSERT OR UPDATE ON uteditte
+			FOR EACH ROW
+			EXECUTE PROCEDURE utd_trigger_function();
+		END IF;
+	END
+$$;
+
+INSERT INTO uteditte (utd_dit, utd_ute)
+VALUES (1, 1);
+INSERT INTO uteditte (utd_dit, utd_ute)
+VALUES (1, 2);
+INSERT INTO uteditte (utd_dit, utd_ute)
+VALUES (1, 3);
 
 /*
 
@@ -516,6 +716,216 @@ DO $$
 		END IF;
 	END
 $$;
+
+/*
+*	Creazione Tabella persone_giuridiche
+*/
+CREATE TABLE IF NOT EXISTS persone_giuridiche
+(
+	pgi_codice			BIGSERIAL PRIMARY KEY,
+	pgi_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	pgi_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pgi_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pgi_user			INTEGER
+);
+CREATE INDEX pgi_desc ON persone_giuridiche (pgi_desc, pgi_codice);
+
+CREATE OR REPLACE FUNCTION pgi_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.pgi_desc		= TRIM(NEW.pgi_desc);
+		NEW.pgi_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.pgi_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'pgi_trigger') THEN
+			CREATE TRIGGER pgi_trigger
+			BEFORE INSERT OR UPDATE ON persone_giuridiche
+			FOR EACH ROW
+			EXECUTE PROCEDURE pgi_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella Tipologia Attività (Imprese)
+*/
+CREATE TABLE IF NOT EXISTS tipologia_attivita
+(
+	tat_codice			BIGSERIAL PRIMARY KEY,
+	tat_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	tat_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	tat_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	tat_user			INTEGER
+);
+CREATE INDEX tat_desc ON tipologia_attivita (tat_desc, tat_codice);
+
+CREATE OR REPLACE FUNCTION tat_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.tat_desc		= TRIM(NEW.tat_desc);
+		NEW.tat_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.tat_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'tat_trigger') THEN
+			CREATE TRIGGER tat_trigger
+			BEFORE INSERT OR UPDATE ON tipologia_attivita
+			FOR EACH ROW
+			EXECUTE PROCEDURE tat_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella Attività (Privati)
+*/
+CREATE TABLE IF NOT EXISTS attivita
+(
+	att_codice			BIGSERIAL PRIMARY KEY,
+	att_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	att_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	att_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	att_user			INTEGER
+);
+CREATE INDEX att_desc ON attivita (att_desc, att_codice);
+
+CREATE OR REPLACE FUNCTION att_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.att_desc		= TRIM(NEW.att_desc);
+		NEW.att_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.att_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'att_trigger') THEN
+			CREATE TRIGGER att_trigger
+			BEFORE INSERT OR UPDATE ON attivita
+			FOR EACH ROW
+			EXECUTE PROCEDURE att_trigger_function();
+		END IF;
+	END
+$$;
+
+
+/*
+*	Creazione Tabella Clienti
+*/
+CREATE TABLE IF NOT EXISTS clienti
+(
+	cli_codice			BIGSERIAL PRIMARY KEY,
+	cli_rag_soc1		VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_rag_soc2		VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_desc			VARCHAR (201)  NOT NULL DEFAULT '',
+	cli_tipo			SMALLINT NOT NULL DEFAULT 0,
+	cli_indirizzo		VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_citta			VARCHAR (200)  NOT NULL DEFAULT '',
+	cli_cap				VARCHAR (5)    NOT NULL DEFAULT '',
+	cli_prov			VARCHAR (2)    NOT NULL DEFAULT '',
+	cli_piva			VARCHAR (28)   NOT NULL DEFAULT '',
+	cli_codfis			VARCHAR (16)   NOT NULL DEFAULT '',
+	cli_tipo			SMALLINT NOT NULL DEFAULT 0,
+	cli_email			VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_web				TEXT NOT NULL DEFAULT '',
+	cli_pec				VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_tel1			VARCHAR (15)   NOT NULL DEFAULT '',
+	cli_tel2			VARCHAR (15)   NOT NULL DEFAULT '',
+	cli_cel				VARCHAR (15)   NOT NULL DEFAULT '',
+	cli_per				BIGINT,
+	cli_gru				INTEGER,
+	cli_tat				BIGINT,
+	cli_inizio_attivita	DATE,
+	cli_ateco1			VARCHAR(20) NOT NULL DEFAULT '',
+	cli_ateco2			VARCHAR(20) NOT NULL DEFAULT '',
+	cli_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cli_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cli_user			INTEGER,
+	cli_interlocutore	VARCHAR(100) NOT NULL DEFAULT '',
+	cli_int_funzione	VARCHAR(100) NOT NULL DEFAULT '',
+	cli_int_telefono	VARCHAR(15) NOT NULL DEFAULT '',
+	cli_int_email		VARCHAR (100)  NOT NULL DEFAULT '',
+
+	cli_data_nascita	DATE,
+	cli_luogo_nascita	VARCHAR(100) NOT NULL DEFAULT '',
+	cli_prov_nascita	VARCHAR(2) NOT NULL DEFAULT '',
+	cli_cap_sacita		VARCHAR (5)    NOT NULL DEFAULT '',
+	cli_att				BIGINT,
+	cli_note			TEXT NOT NULL DEFAULT '',
+
+	tat_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	tat_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	tat_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	tat_user			INTEGER
+);
+CREATE INDEX cli_desc ON clienti (cli_desc, cli_codice);
+
+CREATE OR REPLACE FUNCTION cli_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.cli_rag_soc1	= TRIM(NEW.cli_rag_soc1);
+	    NEW.cli_rag_soc2	= TRIM(NEW.cli_rag_soc2);
+	    NEW.cli_desc		= TRIM(NEW.cli_rag_soc1 || ' ' || NEW.cli_rag_soc2);
+	    NEW.cli_indirizzo	= TRIM(NEW.cli_indirizzo);
+	    NEW.cli_citta		= TRIM(NEW.cli_citta);
+	    NEW.cli_cap			= TRIM(NEW.cli_cap);
+	    NEW.cli_prov		= TRIM(NEW.cli_prov);
+	    NEW.cli_piva		= TRIM(NEW.cli_piva);
+	    NEW.cli_codfis		= TRIM(NEW.cli_codfis);
+	    NEW.cli_email		= LOWER(TRIM(NEW.cli_email));
+	    NEW.cli_web			= TRIM(NEW.cli_web);
+
+
+		NEW.cli_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.cli_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'tat_trigger') THEN
+			CREATE TRIGGER tat_trigger
+			BEFORE INSERT OR UPDATE ON tipologia_attivita
+			FOR EACH ROW
+			EXECUTE PROCEDURE tat_trigger_function();
+		END IF;
+	END
+$$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -611,52 +1021,6 @@ DO $$
 	END
 $$;
 
-
-/*
-*	Creazione Tabella Ditte Utenti
-*/
-CREATE TABLE IF NOT EXISTS uteditte
-(
-    utd_dit				INTEGER,
-	utd_ute 		    INTEGER,
-	utd_default			SMALLINT NOT NULL DEFAULT 0,
-	utd_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	utd_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT utd_ditute PRIMARY KEY (utd_dit, utd_ute),
-	CONSTRAINT utd_ditte_fkey FOREIGN KEY (utd_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT utd_utente_fkey FOREIGN KEY (utd_ute) REFERENCES utenti (ute_codice) ON UPDATE CASCADE ON DELETE CASCADE
-);
-CREATE INDEX utd_dit ON uteditte (utd_dit);
-CREATE INDEX utd_ute ON uteditte (utd_ute, utd_default);
-
-CREATE OR REPLACE FUNCTION utd_trigger_function()
-RETURNS TRIGGER AS $$
-	BEGIN
-		NEW.utd_last_update	= NOW();
-   	    IF  (TG_OP = 'INSERT') THEN
-           NEW.utd_created_at	= NOW();
-    	END IF;
-		RETURN NEW;
-	END;
-$$ language 'plpgsql';
-
-DO $$
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'utd_trigger') THEN
-			CREATE TRIGGER utd_trigger
-			BEFORE INSERT OR UPDATE ON uteditte
-			FOR EACH ROW
-			EXECUTE PROCEDURE utd_trigger_function();
-		END IF;
-	END
-$$;
-
-INSERT INTO uteditte (utd_dit, utd_ute)
-VALUES (1, 1);
-INSERT INTO uteditte (utd_dit, utd_ute)
-VALUES (1, 2);
-INSERT INTO uteditte (utd_dit, utd_ute)
-VALUES (1, 3);
 
 
 
@@ -2367,238 +2731,6 @@ DO $$
 	END
 $$;
 
-/*
-	Creazione Tabella Allegati
-
-	all_type = 0 Documenti Dipendenti
-	all_type = 1 Documenti Cantiere
-	all_type = 2 Documenti Ditta
-	all_type = 3 Documenti Mezzi
-	all_type = 4 Documenti Manutenzione Mezzi
-	all_type = 5 Documenti Modelli
-	all_type = 6 Giornale Lavori
-	all_type = 7 Certificati di Pagamento
-	all_type = 8 Visite Mediche
-*/
-CREATE TABLE IF NOT EXISTS allegati
-(
-    all_dit			INTEGER NOT NULL,
-    all_type		SMALLINT NOT NULL DEFAULT 0,
-	all_doc			INTEGER NOT NULL,
-	all_idx			INTEGER NOT NULL DEFAULT 0,
-	all_desc		VARCHAR (100) NOT NULL DEFAULT '',
-	all_fname		VARCHAR (260) NOT NULL DEFAULT '',
-	all_local_fname	VARCHAR (260) NOT NULL DEFAULT '',
-	all_bytes_size	BIGINT NOT NULL DEFAULT 0,
-	all_date_time	TIMESTAMP DEFAULT NULL,
-	all_created_at	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	all_last_update	TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	all_type_doc    INTEGER,
-	all_type_dca    INTEGER,
-	all_type_dod    INTEGER,
-	all_type_dme    INTEGER,
-	all_type_mnt    INTEGER,
-	all_type_dmo    INTEGER,
-	all_type_gio    INTEGER,
-	all_type_cpa    INTEGER,
-	all_type_dvi	INTEGER,
-	CONSTRAINT all_codice PRIMARY KEY (all_dit, all_type, all_doc, all_idx),
-	CONSTRAINT all_ditte_fkey FOREIGN KEY (all_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_documenti_fkey FOREIGN KEY (all_dit, all_type_doc) REFERENCES documenti (doc_dit, doc_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_doccantieri_fkey FOREIGN KEY (all_dit, all_type_dca) REFERENCES doccantieri (dca_dit, dca_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT all_docditte_fkey FOREIGN KEY (all_dit, all_type_dod) REFERENCES docditte (dod_dit, dod_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_docmezzi_fkey FOREIGN KEY (all_dit, all_type_dme) REFERENCES docmezzi (dme_dit, dme_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_manutenzioni_fkey FOREIGN KEY (all_dit, all_type_mnt) REFERENCES manutenzioni (mnt_dit, mnt_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_docmodelli_fkey FOREIGN KEY (all_dit, all_type_dmo) REFERENCES docmodelli (dmo_dit, dmo_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_giornale_fkey FOREIGN KEY (all_dit, all_type_gio) REFERENCES giornalelav (gio_dit, gio_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_certificatipag_fkey FOREIGN KEY (all_dit, all_type_cpa) REFERENCES certificatipag (cpa_dit, cpa_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT all_dipvisite_fkey FOREIGN KEY (all_dit, all_type_dvi) REFERENCES dipvisite (dvi_dit, dvi_codice) ON UPDATE CASCADE ON DELETE CASCADE
-)  PARTITION BY LIST (all_dit);
-
-ALTER TABLE allegati
-    ADD COLUMN all_type_dvi  INTEGER,
-	ADD CONSTRAINT all_dipvisite_fkey FOREIGN KEY (all_dit, all_type_dvi) REFERENCES dipvisite (dvi_dit, dvi_codice) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
-
-ALTER TABLE allegati
-    ADD COLUMN all_type_gio    INTEGER,
-    ADD COLUMN all_type_cpa    INTEGER,
-	ADD CONSTRAINT all_giornale_fkey FOREIGN KEY (all_dit, all_type_gio) REFERENCES giornalelav (gio_dit, gio_codice) ON UPDATE CASCADE ON DELETE CASCADE,
-    ADD CONSTRAINT all_certificatipag_fkey FOREIGN KEY (all_dit, all_type_cpa) REFERENCES certificatipag (cpa_dit, cpa_codice) ON UPDATE CASCADE ON DELETE CASCADE;
-
-CREATE INDEX IF NOT EXISTS all_ditte ON allegati (all_dit);
-CREATE INDEX IF NOT EXISTS all_documenti ON allegati (all_dit, all_type_doc);
-CREATE INDEX IF NOT EXISTS all_doccantieri ON allegati (all_dit, all_type_dca);
-CREATE INDEX IF NOT EXISTS all_docditte ON allegati (all_dit, all_type_dod);
-CREATE INDEX IF NOT EXISTS all_docmezzi ON allegati (all_dit, all_type_dme);
-CREATE INDEX IF NOT EXISTS all_manutenzioni ON allegati (all_dit, all_type_mnt);
-CREATE INDEX IF NOT EXISTS all_docmodelli ON allegati (all_dit, all_type_dmo);
-CREATE INDEX IF NOT EXISTS all_giornalelav ON allegati (all_dit, all_type_gio);
-CREATE INDEX IF NOT EXISTS all_certificatipag ON allegati (all_dit, all_type_cpa);
-CREATE INDEX IF NOT EXISTS all_dipvisite ON allegati (all_dit, all_type_dvi);
-
-CREATE OR REPLACE FUNCTION all_trigger_function()
-RETURNS TRIGGER AS $$
-	BEGIN
-		NEW.all_fname		= TRIM(NEW.all_fname);
-		NEW.all_last_update	= NOW();
-	    IF  (TG_OP = 'INSERT') THEN
-           NEW.all_created_at	= NOW();
-    	END IF;
-		IF (NEW.all_type = 0) THEN
-            NEW.all_type_doc = NEW.all_doc;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 1) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NEW.all_doc;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 2) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NEW.all_doc;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 3) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NEW.all_doc;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 4) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NEW.all_doc;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 5) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NEW.all_doc;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 6) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NEW.all_doc;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 7) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NEW.all_doc;
-            NEW.all_type_dvi = NULL;
-        END IF;
-		IF (NEW.all_type = 8) THEN
-            NEW.all_type_doc = NULL;
-            NEW.all_type_dca = NULL;
-            NEW.all_type_dod = NULL;
-            NEW.all_type_dme = NULL;
-            NEW.all_type_mnt = NULL;
-            NEW.all_type_dmo = NULL;
-            NEW.all_type_gio = NULL;
-            NEW.all_type_cpa = NULL;
-            NEW.all_type_dvi = NEW.all_doc;
-        END IF;
-		RETURN NEW;
-	END;
-$$ language 'plpgsql';
-
-DO $$
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'all_trigger') THEN
-			CREATE TRIGGER all_trigger
-			BEFORE INSERT OR UPDATE ON allegati
-			FOR EACH ROW
-			EXECUTE PROCEDURE all_trigger_function();
-		END IF;
-	END
-$$;
-
-/*
-	Tabella Immagini ditte
-*/
-CREATE TABLE IF NOT EXISTS imgditte
-(
-	img_dit			INTEGER NOT NULL DEFAULT 0,
-	img_codice		INTEGER NOT NULL,
-	img_formato		SMALLINT NOT NULL DEFAULT 0,
-	img_tipo		SMALLINT NOT NULL DEFAULT 0,
-	img_bytes_size	INTEGER NOT NULL DEFAULT 0,
-	img_created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	img_last_update	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	img_data		BYTEA,
-	CONSTRAINT imd_codice PRIMARY KEY (img_dit, img_codice, img_formato),
-	CONSTRAINT imd_dit_fkey FOREIGN KEY (img_codice) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS imd_ditte ON imgditte (img_dit, img_codice);
-
-CREATE OR REPLACE FUNCTION imd_trigger_function()
-RETURNS TRIGGER AS $$
-	BEGIN
-		NEW.img_last_update	= NOW();
-   	    IF  (TG_OP = 'INSERT') THEN
-           NEW.img_created_at	= NOW();
-    	END IF;
-		RETURN NEW;
-	END;
-$$ language 'plpgsql';
-
-DO $$
-	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'imd_trigger') THEN
-			CREATE TRIGGER imd_trigger
-			BEFORE INSERT OR UPDATE ON imgditte
-			FOR EACH ROW
-			EXECUTE PROCEDURE imd_trigger_function();
-		END IF;
-	END
-$$;
 
 
 /*
@@ -3138,4 +3270,6 @@ DO $$
 		END IF;
 	END
 $$;
+
+
 
