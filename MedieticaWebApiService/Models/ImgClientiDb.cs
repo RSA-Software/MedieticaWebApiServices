@@ -9,157 +9,7 @@ using MedieticaWebApiService.Helpers;
 
 namespace MedieticaWebApiService.Models
 {
-	public class ImagesSwap
-	{
-		public int img_dit { get; set; }
-		public int img_codice { get; set; }
-		public ImagesSwap(int dit, int codice)
-		{
-			img_dit = dit;
-			img_codice = codice;
-		}
-	}
-	
-	public class ImagesJson
-	{
-		public int img_dit { get; set; }
-		public int img_codice { get; set; }
-		public short img_formato { get; set; }
-		public short img_tipo { get; set; }
-		public DateTime? img_created_at { get; set; }
-		public DateTime? img_last_update { get; set; }
-		public string img_data { get; set; }
-		
-		public ImagesJson(ImgMezziDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-
-		public ImagesJson(ImgClientiDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-
-		public ImagesJson(ImgMarchiDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-
-		public ImagesJson(ImgCantieriDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-		public ImagesJson(ImgGiornaliLavoriDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-
-		public ImagesJson(ImgDipendentiDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-
-		public ImagesJson(ImgModelliDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}		
-		
-		public ImagesJson(ImgDitteDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-		public ImagesJson(ImgUtentiDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_data = img.img_data;
-		}
-
-	}
-
-	public class ImageListJson
-	{
-		public int img_dit { get; set; }
-		public int img_codice { get; set; }
-		public short img_tipo { get; set; }
-		public short img_formato { get; set; }
-		public DateTime? img_created_at { get; set; }
-		public DateTime? img_last_update { get; set; }
-
-		public ImageListJson()
-		{
-			img_dit = 0;
-			img_codice = 0;
-			img_tipo = 0;
-			img_formato = 0;
-			img_last_update = null;
-		}
-	}
-
-	public class ImagesSwapList
-	{
-		public short img_formato;
-
-		public ImagesSwapList()
-		{
-			img_formato = 0;
-		}
-
-	}
-	
-	public class ImgMezziDb
+	public class ImgClientiDb
 	{
 		public int img_dit { get; set; }
 		public int img_codice { get; set; }
@@ -170,45 +20,22 @@ namespace MedieticaWebApiService.Models
 		public DateTime? img_last_update { get; set; }
 		public string img_data { get; set; }
 
-		//
-		// Campi relazionati
-		//
-		public bool modello { get; set; }
-
-		private const int SmallSize = 240;
+		private const int SmallSize = 512;
 		private const short SwapGap = 20000;
-		private static readonly List<string> ExcludeFields = new List<string>() { "modello" };
-		
-		public ImgMezziDb()
+
+		public ImgClientiDb()
 		{
 			var img_db = this;
 			DbUtils.Initialize(ref img_db);
 		}
-		public static List<string> GetJoinExcludeFields()
-		{
-			return (ExcludeFields);
-		}
 
-		public ImgMezziDb(ImgModelliDb img)
-		{
-			img_dit = img.img_dit;
-			img_codice = img.img_codice;
-			img_tipo = img.img_tipo;
-			img_formato = img.img_formato;
-			img_created_at = img.img_created_at;
-			img_last_update = img.img_last_update;
-			img_bytes_size = img.img_bytes_size;
-			img_data = img.img_data;
-			modello = true;
-		}
-		
 		public static Image ByteArrayToImage(byte[] byteArrayIn)
 		{
 			if (byteArrayIn == null) return (null);
 
 			var ms = new MemoryStream(byteArrayIn, 0, byteArrayIn.Length);
 			ms.Write(byteArrayIn, 0, byteArrayIn.Length);
-			return(Image.FromStream(ms, true));
+			return (Image.FromStream(ms, true));
 		}
 
 		public static byte[] ImageToByteArray(Bitmap imageIn, ImageFormat format)
@@ -245,12 +72,7 @@ namespace MedieticaWebApiService.Models
 			return dest_image;
 		}
 
-		public static string GetTableDescription()
-		{
-			return ("Immagini");
-		}
-
-		public static bool Search(ref OdbcCommand cmd, int codDit, int codice, short formato, ref ImgMezziDb img, bool partial = false, bool writeLock = false)
+		public static bool Search(ref OdbcCommand cmd, int codDit, int codice, short formato, ref ImgClientiDb img, bool partial = false, bool writeLock = false)
 		{
 			if (img != null) DbUtils.Initialize(ref img);
 			if (cmd == null)
@@ -265,9 +87,9 @@ namespace MedieticaWebApiService.Models
 
 			string sql;
 			if (partial)
-				sql = DbUtils.QueryAdapt("SELECT img_dit, img_codice, img_formato, img_tipo, img_bytes_size, img_created_at, img_last_update FROM imgmezzi WHERE img_dit = ? AND img_codice = ? AND img_formato = ?", 1);
+				sql = DbUtils.QueryAdapt("SELECT img_dit, img_codice, img_formato, img_tipo, img_bytes_size, img_created_at, img_last_update FROM imgclienti WHERE img_dit = ? AND img_codice = ? AND img_formato = ?", 1);
 			else 
-				sql = DbUtils.QueryAdapt("SELECT * FROM imgmezzi WHERE img_dit = ? AND img_codice = ? AND img_formato = ?", 1);
+				sql = DbUtils.QueryAdapt("SELECT * FROM imgclienti WHERE img_dit = ? AND img_codice = ? AND img_formato = ?", 1);
 			if (writeLock) sql += " FOR UPDATE NOWAIT";
 			cmd.CommandText = sql;
 			cmd.Parameters.Clear();
@@ -275,8 +97,8 @@ namespace MedieticaWebApiService.Models
 			cmd.Parameters.Add("codice", OdbcType.Int).Value = codice;
 			cmd.Parameters.Add("formato", OdbcType.SmallInt).Value = formato;
 
-			var esc_fields = ExcludeFields;
-			if (partial) esc_fields.Add("img_data");
+			List<string> esc_fields = null;
+			if (partial) esc_fields = new List<string> { "img_data" };
 
 			var reader = cmd.ExecuteReader();
 			var found = reader.HasRows;
@@ -288,25 +110,17 @@ namespace MedieticaWebApiService.Models
 			return (found);
 		}
 
-		public static void Write(ref OdbcCommand cmd, DbMessage msg, ref ImgMezziDb img, ref object obj, bool partial = true)
+		public static void Write(ref OdbcCommand cmd, DbMessage msg, ref ImgClientiDb img, ref object obj, bool partial = true)
 		{
 			DbUtils.Trim(ref img);
 
 			if (msg == DbMessage.DB_UPDATE || msg == DbMessage.DB_DELETE || msg == DbMessage.DB_CLEAR || msg == DbMessage.DB_REWRITE)
 			{
-				var old = new ImgMezziDb();
+				var old = new ImgClientiDb();
 				if (!Search(ref cmd, img.img_dit, img.img_codice, img.img_formato, ref old, true, true)) throw new MCException(MCException.DeletedMsg, MCException.DeletedErr);
 				if (old.img_last_update != img.img_last_update) throw new MCException(MCException.ModifiedMsg, MCException.ModifiedErr);
 			}
 
-			if (msg == DbMessage.DB_INSERT || msg == DbMessage.DB_UPDATE)
-			{
-				DitteDb dit = null;
-				if (!DitteDb.Search(ref cmd, img.img_dit, ref dit)) throw new MCException(MCException.DittaMsg, MCException.DittaErr);
-
-				MezziDb mez = null;
-				if (!MezziDb.Search(ref cmd, img.img_dit, img.img_codice, ref mez)) throw new MCException(MCException.DipendenteMsg, MCException.DipendenteErr);
-			}
 			switch (msg)
 			{
 				case DbMessage.DB_INSERT:
@@ -315,13 +129,24 @@ namespace MedieticaWebApiService.Models
 						{
 							try
 							{
-								cmd.CommandText = DbUtils.SqlCommand(ref cmd, DbMessage.DB_INSERT, ref img, "imgmezzi", null, ExcludeFields);
+								//
+								// Eliminiamo le immagini precedenti
+								// 
+								cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgclienti WHERE img_dit = ? AND img_codice = ?");
+								cmd.Parameters.Clear();
+								cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
+								cmd.Parameters.Add("codice", OdbcType.Int).Value = img.img_codice;
+								cmd.ExecuteNonQuery();
+								
+
+
+								cmd.CommandText = DbUtils.SqlCommand(ref cmd, DbMessage.DB_INSERT, ref img, "imgclienti");
 								cmd.ExecuteNonQuery();
 
 								//
 								// Scriviamo la miniatura
 								// 
-								cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgmezzi WHERE img_dit = ? AND img_codice = ? AND img_formato = ?");
+								cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgclienti WHERE img_dit = ? AND img_codice = ? AND img_formato = ?");
 								cmd.Parameters.Clear();
 								cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
 								cmd.Parameters.Add("codice", OdbcType.Int).Value = img.img_codice;
@@ -340,7 +165,7 @@ namespace MedieticaWebApiService.Models
 								}
 
 								var data = ImageToByteArray(image, img.img_tipo != 15 ? ImageFormat.Jpeg : ImageFormat.Png);
-								var thu = new ImgMezziDb();
+								var thu = new ImgClientiDb();
 								thu.img_dit = img.img_dit;
 								thu.img_codice = img.img_codice;
 								thu.img_tipo = img.img_tipo;
@@ -348,7 +173,7 @@ namespace MedieticaWebApiService.Models
 								thu.img_bytes_size = data.Length;
 								thu.img_data = Convert.ToBase64String(data);
 
-								cmd.CommandText = DbUtils.SqlCommand(ref cmd, DbMessage.DB_INSERT, ref thu, "imgmezzi", null, ExcludeFields);
+								cmd.CommandText = DbUtils.SqlCommand(ref cmd, DbMessage.DB_INSERT, ref thu, "imgclienti");
 								cmd.ExecuteNonQuery();
 							}
 							catch (OdbcException ex)
@@ -368,7 +193,7 @@ namespace MedieticaWebApiService.Models
 				case DbMessage.DB_DELETE:
 				case DbMessage.DB_CLEAR:
 				{
-					cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgmezzi WHERE img_dit = ? AND img_codice = ? AND img_formato IN (?, ?)");
+					cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgclienti WHERE img_dit = ? AND img_codice = ? AND img_formato IN (?, ?)");
 					cmd.Parameters.Clear();
 					cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
 					cmd.Parameters.Add("codice", OdbcType.Int).Value = img.img_codice;
@@ -377,7 +202,7 @@ namespace MedieticaWebApiService.Models
 					cmd.ExecuteNonQuery();
 
 					var arr = new List<short>();
-					var sql = "SELECT img_formato FROM imgmezzi WHERE img_dit = ? AND img_codice = ? ORDER BY img_formato FOR UPDATE NOWAIT";
+					var sql = "SELECT img_formato FROM imgclienti WHERE img_dit = ? AND img_codice = ? ORDER BY img_formato FOR UPDATE NOWAIT";
 					cmd.CommandText = DbUtils.QueryAdapt(sql);
 					cmd.Parameters.Clear();
 					cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
@@ -390,7 +215,7 @@ namespace MedieticaWebApiService.Models
 					reader.Close();
 
 					short last = 0;
-					sql = DbUtils.QueryAdapt("UPDATE imgmezzi SET img_formato = ?, img_last_update = Now() WHERE img_dit = ? AND img_codice = ? AND img_formato = ?");
+					sql = DbUtils.QueryAdapt("UPDATE imgclienti SET img_formato = ?, img_last_update = Now() WHERE img_dit = ? AND img_codice = ? AND img_formato = ?");
 					foreach (var fmt in arr)
 					{
 						if ((fmt % 2) != (last % 2)) throw new MCException(MCException.ImgDisallineateMsg, MCException.ImgDisallineateErr);
@@ -412,8 +237,7 @@ namespace MedieticaWebApiService.Models
 
 			}
 		}
-		
-		
+
 		public static void Swap(ref OdbcCommand cmd, DbMessage msg, ref ImagesSwap swa, ref IList<ImagesSwapList> arr, bool parial = false)
 		{
 			if (arr == null) return;
@@ -422,7 +246,7 @@ namespace MedieticaWebApiService.Models
 			// Applichiamo il lock a tutti i record coinvolti
 			//
 			var first = true;
-			var sql = "SELECT * FROM imgmezzi";
+			var sql = "SELECT * FROM imgclienti";
 			var where = $" WHERE img_dit = {swa.img_dit} AND img_codice = {swa.img_codice} AND img_formato IN (";
 			foreach (var swp in arr)
 			{
@@ -442,7 +266,7 @@ namespace MedieticaWebApiService.Models
 			//
 			// Riscriviamo i record con il formato in negativo
 			//
-			sql = DbUtils.QueryAdapt($"UPDATE imgmezzi SET img_formato = ? WHERE img_dit = {swa.img_dit} AND img_codice = {swa.img_codice} AND img_formato = ?");
+			sql = DbUtils.QueryAdapt($"UPDATE imgclienti SET img_formato = ? WHERE img_dit = {swa.img_dit} AND img_codice = {swa.img_codice} AND img_formato = ?");
 			foreach (var swp in arr)
 			{
 				var old_img = swp.img_formato % 2 == 0 ? swp.img_formato : swp.img_formato - 1;
@@ -465,7 +289,7 @@ namespace MedieticaWebApiService.Models
 			// Riscriviamo i record nell'ordine desiderato
 			//
 			short last = 0;
-			sql = DbUtils.QueryAdapt($"UPDATE imgmezzi SET img_formato = ?, img_last_update = Now() WHERE img_dit = {swa.img_dit} AND img_codice = {swa.img_codice} AND img_formato = ?");
+			sql = DbUtils.QueryAdapt($"UPDATE imgclienti SET img_formato = ?, img_last_update = Now() WHERE img_dit = {swa.img_dit} AND img_codice = {swa.img_codice} AND img_formato = ?");
 			foreach (var swp in arr)
 			{
 				var old_img = swp.img_formato % 2 == 0 ? swp.img_formato : swp.img_formato - 1;
@@ -478,7 +302,7 @@ namespace MedieticaWebApiService.Models
 						cmd.CommandText = sql;
 						cmd.Parameters.Clear();
 						cmd.Parameters.Add("new_fmt", OdbcType.SmallInt).Value = last;
-						cmd.Parameters.Add("ild_fmt", OdbcType.SmallInt).Value = - (old_img + SwapGap);
+						cmd.Parameters.Add("old_fmt", OdbcType.SmallInt).Value = - (old_img + SwapGap);
 						cmd.ExecuteNonQuery();
 					}
 					catch (OdbcException ex)
@@ -504,7 +328,7 @@ namespace MedieticaWebApiService.Models
 			}
 		}
 		
-		public static void Reload(ref OdbcCommand cmd, ref ImgMezziDb img, bool partial)
+		public static void Reload(ref OdbcCommand cmd, ref ImgClientiDb img, bool partial)
 		{
 			if (!Search(ref cmd, img.img_dit, img.img_codice, img.img_formato, ref img, partial)) throw new MCException(MCException.DeletedMsg, MCException.DeletedErr);
 		}
