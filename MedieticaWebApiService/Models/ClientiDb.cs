@@ -6,6 +6,13 @@ using MedieticaWebApiService.Helpers;
 
 namespace MedieticaWebApiService.Models
 {
+	internal enum ClientiTipo : short
+	{
+		CLI_TYPE_SELECT = -1,
+		CLI_TYPE_IMPRESE = 0,
+		CLI_TYPE_PRIVATI = 1
+	}
+
 	public class ClientiDb
 	{
 		public long cli_codice { get; set; }
@@ -55,7 +62,7 @@ namespace MedieticaWebApiService.Models
 
 		private static readonly string JoinQuery = @"
 		SELECT *, img_data, NULL AS img_list
-		FROM ditte
+		FROM clienti
 		LEFT JOIN imgclienti ON cli_codice = img_dit AND cli_codice = img_codice AND img_formato = 1";
 
 		private static readonly string CountQuery = @"
@@ -121,7 +128,7 @@ namespace MedieticaWebApiService.Models
 			return (found);
 		}
 
-		public static void Write(ref OdbcCommand cmd, DbMessage msg, ref ClientiDb cli, ref int codute, bool joined = false)
+		public static void Write(ref OdbcCommand cmd, DbMessage msg, ref ClientiDb cli, ref object obj, bool joined = false)
 		{
 			DbUtils.Trim(ref cli);
 			if (msg == DbMessage.DB_UPDATE || msg == DbMessage.DB_REWRITE || msg == DbMessage.DB_DELETE || msg == DbMessage.DB_CLEAR)
@@ -131,8 +138,7 @@ namespace MedieticaWebApiService.Models
 				if (old.cli_last_update != cli.cli_last_update) throw new MCException(MCException.ModifiedMsg, MCException.ModifiedErr);
 			}
 			
-			cli.cli_desc = cli.cli_rag_soc1.Trim() + " " + cli.cli_rag_soc2.Trim();
-			cli.cli_desc = cli.cli_desc.Trim();
+			cli.cli_desc = (cli.cli_rag_soc1.Trim() + " " + cli.cli_rag_soc2.Trim()).Trim();
 			if (msg == DbMessage.DB_INSERT || msg == DbMessage.DB_UPDATE)
 			{
 				if (string.IsNullOrWhiteSpace(cli.cli_rag_soc1)) throw new MCException(MCException.CampoObbligatorioMsg + $" ({cli.cli_codice}) : rag_soc1", MCException.CampoObbligatorioErr);

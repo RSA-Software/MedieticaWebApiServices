@@ -217,6 +217,7 @@
     <Compile Include="Controller\Aanac\AttestazioniSoaController.cs" />
     <Compile Include="Controller\Aanac\BandiCigController.cs" />
     <Compile Include="Controller\AllegatiController.cs" />
+    <Compile Include="Controller\ClientiController.cs" />
     <Compile Include="Controller\GaranzieController.cs" />
     <Compile Include="Controller\ContropartiController.cs" />
     <Compile Include="Controller\FabbisognoController.cs" />
