@@ -217,10 +217,12 @@
     <Compile Include="Controller\Aanac\AttestazioniSoaController.cs" />
     <Compile Include="Controller\Aanac\BandiCigController.cs" />
     <Compile Include="Controller\AllegatiController.cs" />
+    <Compile Include="Controller\FornitoriController.cs" />
     <Compile Include="Controller\ClientiController.cs" />
     <Compile Include="Controller\GaranzieController.cs" />
     <Compile Include="Controller\ContropartiController.cs" />
     <Compile Include="Controller\FabbisognoController.cs" />
+    <Compile Include="Controller\ImgFornitoriController.cs" />
     <Compile Include="Controller\ImgClientiController.cs" />
     <Compile Include="Controller\StrumentiController.cs" />
     <Compile Include="Controller\SettoriController.cs" />
@@ -295,10 +297,12 @@
     <Compile Include="Models\AllegatiDb.cs" />
     <Compile Include="Models\Anac\AttestazioniSoaDb.cs" />
     <Compile Include="Models\Anac\BandiCigDb.cs" />
+    <Compile Include="Models\FornitoriDb.cs" />
     <Compile Include="Models\ClientiDb.cs" />
     <Compile Include="Models\GaranzieDb.cs" />
     <Compile Include="Models\ContropartiDb.cs" />
     <Compile Include="Models\FabbisognoDb.cs" />
+    <Compile Include="Models\ImgFornitoriDb.cs" />
     <Compile Include="Models\ImgClientiDb.cs" />
     <Compile Include="Models\StrumentiDb.cs" />
     <Compile Include="Models\SettoriDb.cs" />

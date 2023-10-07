@@ -11,8 +11,8 @@ namespace MedieticaWebApiService.Models
 {
 	public class ImgClientiDb
 	{
-		public int img_dit { get; set; }
-		public int img_codice { get; set; }
+		public long img_dit { get; set; }
+		public long img_codice { get; set; }
 		public short img_formato { get; set; }
 		public short img_tipo { get; set; }
 		public int img_bytes_size { get; set; }
@@ -72,7 +72,7 @@ namespace MedieticaWebApiService.Models
 			return dest_image;
 		}
 
-		public static bool Search(ref OdbcCommand cmd, int codDit, int codice, short formato, ref ImgClientiDb img, bool partial = false, bool writeLock = false)
+		public static bool Search(ref OdbcCommand cmd, long codDit, long codice, short formato, ref ImgClientiDb img, bool partial = false, bool writeLock = false)
 		{
 			if (img != null) DbUtils.Initialize(ref img);
 			if (cmd == null)
@@ -93,8 +93,8 @@ namespace MedieticaWebApiService.Models
 			if (writeLock) sql += " FOR UPDATE NOWAIT";
 			cmd.CommandText = sql;
 			cmd.Parameters.Clear();
-			cmd.Parameters.Add("coddit", OdbcType.Int).Value = codDit;
-			cmd.Parameters.Add("codice", OdbcType.Int).Value = codice;
+			cmd.Parameters.Add("coddit", OdbcType.BigInt).Value = codDit;
+			cmd.Parameters.Add("codice", OdbcType.BigInt).Value = codice;
 			cmd.Parameters.Add("formato", OdbcType.SmallInt).Value = formato;
 
 			List<string> esc_fields = null;
@@ -134,8 +134,8 @@ namespace MedieticaWebApiService.Models
 								// 
 								cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgclienti WHERE img_dit = ? AND img_codice = ?");
 								cmd.Parameters.Clear();
-								cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
-								cmd.Parameters.Add("codice", OdbcType.Int).Value = img.img_codice;
+								cmd.Parameters.Add("coddit", OdbcType.BigInt).Value = img.img_dit;
+								cmd.Parameters.Add("codice", OdbcType.BigInt).Value = img.img_codice;
 								cmd.ExecuteNonQuery();
 								
 
@@ -148,8 +148,8 @@ namespace MedieticaWebApiService.Models
 								// 
 								cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgclienti WHERE img_dit = ? AND img_codice = ? AND img_formato = ?");
 								cmd.Parameters.Clear();
-								cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
-								cmd.Parameters.Add("codice", OdbcType.Int).Value = img.img_codice;
+								cmd.Parameters.Add("coddit", OdbcType.BigInt).Value = img.img_dit;
+								cmd.Parameters.Add("codice", OdbcType.BigInt).Value = img.img_codice;
 								cmd.Parameters.Add("formato", OdbcType.SmallInt).Value = img.img_formato + 1;
 								cmd.ExecuteNonQuery();
 
@@ -195,8 +195,8 @@ namespace MedieticaWebApiService.Models
 				{
 					cmd.CommandText = DbUtils.QueryAdapt("DELETE FROM imgclienti WHERE img_dit = ? AND img_codice = ? AND img_formato IN (?, ?)");
 					cmd.Parameters.Clear();
-					cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
-					cmd.Parameters.Add("codice", OdbcType.Int).Value = img.img_codice;
+					cmd.Parameters.Add("coddit", OdbcType.BigInt).Value = img.img_dit;
+					cmd.Parameters.Add("codice", OdbcType.BigInt).Value = img.img_codice;
 					cmd.Parameters.Add("form1", OdbcType.SmallInt).Value = img.img_formato;
 					cmd.Parameters.Add("form2", OdbcType.SmallInt).Value = (img.img_formato % 2) == 0 ? img.img_formato + 1 : img.img_formato - 1;
 					cmd.ExecuteNonQuery();
@@ -205,8 +205,8 @@ namespace MedieticaWebApiService.Models
 					var sql = "SELECT img_formato FROM imgclienti WHERE img_dit = ? AND img_codice = ? ORDER BY img_formato FOR UPDATE NOWAIT";
 					cmd.CommandText = DbUtils.QueryAdapt(sql);
 					cmd.Parameters.Clear();
-					cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
-					cmd.Parameters.Add("coddip", OdbcType.Int).Value = img.img_codice;
+					cmd.Parameters.Add("coddit", OdbcType.BigInt).Value = img.img_dit;
+					cmd.Parameters.Add("coddip", OdbcType.BigInt).Value = img.img_codice;
 					var reader = cmd.ExecuteReader();
 					while (reader.Read())
 					{
@@ -225,8 +225,8 @@ namespace MedieticaWebApiService.Models
 							cmd.CommandText = sql;
 							cmd.Parameters.Clear();
 							cmd.Parameters.Add("@form1", OdbcType.SmallInt).Value = last;
-							cmd.Parameters.Add("coddit", OdbcType.Int).Value = img.img_dit;
-							cmd.Parameters.Add("coddip", OdbcType.Int).Value = img.img_codice;
+							cmd.Parameters.Add("coddit", OdbcType.BigInt).Value = img.img_dit;
+							cmd.Parameters.Add("codcli", OdbcType.BigInt).Value = img.img_codice;
 							cmd.Parameters.Add("@form2", OdbcType.SmallInt).Value = fmt;
 							cmd.ExecuteNonQuery();
 						}

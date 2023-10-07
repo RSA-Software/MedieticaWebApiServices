@@ -13,10 +13,13 @@ namespace MedieticaWebApiService.Models
 {
 	internal enum AllegatiTipo : short
 	{
-		ALLEGATI_TYPE_DIPENDENTI = 0,
-		ALLEGATI_TYPE_CANTIERI = 1,
+		ALLEGATI_TYPE_CLIENTI = 0,
+		ALLEGATI_TYPE_DIPENDENTI = 0,   // DA Rimuovere
+		ALLEGATI_TYPE_FORNITORI = 1,
+		ALLEGATI_TYPE_CANTIERI = 1,		// Da Rimuovere
 		ALLEGATI_TYPE_DITTE = 2,
-		ALLEGATI_TYPE_MEZZI = 3,
+		ALLEGATI_TYPE_PRATICHE = 3,
+		ALLEGATI_TYPE_MEZZI = 3,		// Da Rimuovere
 		ALLEGATI_TYPE_MANUTENZIONE_MEZZI = 4,
 		ALLEGATI_TYPE_MODELLI = 5,
 		ALLEGATI_TYPE_GIORNALE = 6,
@@ -69,21 +72,23 @@ namespace MedieticaWebApiService.Models
 
 			switch (tipo)
 			{
-				case (short)AllegatiTipo.ALLEGATI_TYPE_DIPENDENTI:
-					upload_path += "/Dipendenti";
+				case (short)AllegatiTipo.ALLEGATI_TYPE_CLIENTI:
+					upload_path += "/Clienti";
 					break;
 
-				case (short)AllegatiTipo.ALLEGATI_TYPE_CANTIERI:
-					upload_path += "/Cantieri";
+				case (short)AllegatiTipo.ALLEGATI_TYPE_FORNITORI:
+					upload_path += "/Pratiche";
 					break;
 
 				case (short)AllegatiTipo.ALLEGATI_TYPE_DITTE:
 					upload_path += "/Ditte";
 					break;
 
-				case (short)AllegatiTipo.ALLEGATI_TYPE_MEZZI:
-					upload_path += "/Mezzi";
+				case (short)AllegatiTipo.ALLEGATI_TYPE_PRATICHE:
+					upload_path += "/Pratiche";
 					break;
+
+
 
 				case (short)AllegatiTipo.ALLEGATI_TYPE_MANUTENZIONE_MEZZI:
 					upload_path += "/ManutenzioneMezzi";
@@ -173,12 +178,16 @@ namespace MedieticaWebApiService.Models
 
 				switch (all.all_type)
 				{
-					case (short)AllegatiTipo.ALLEGATI_TYPE_DIPENDENTI:
+					case (short)AllegatiTipo.ALLEGATI_TYPE_CLIENTI:
 						{
-							DocDipendentiDb doc = null;
-							if (!DocDipendentiDb.Search(ref cmd, all.all_dit, all.all_doc, ref doc)) throw new MCException(MCException.DocumentiMsg, MCException.DocumentiErr);
+							ClientiDb cli = null;
+							if (!ClientiDb.Search(ref cmd, all.all_doc, ref cli)) throw new MCException(MCException.ClientiMsg, MCException.ClientiErr);
 						}
 						break;
+
+
+
+
 					case (short)AllegatiTipo.ALLEGATI_TYPE_CANTIERI:
 						{
 							DocCantieriDb doc = null;

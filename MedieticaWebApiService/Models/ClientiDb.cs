@@ -27,6 +27,8 @@ namespace MedieticaWebApiService.Models
 		public string cli_piva { get; set; }
 		public string cli_codfis { get; set; }
 		public string cli_email { get; set; }
+		public string cli_web { get; set; }
+
 		public string cli_pec { get; set; }
 		public string cli_tel1 { get; set; }
 		public string cli_tel2 { get; set; }
@@ -47,6 +49,11 @@ namespace MedieticaWebApiService.Models
 		public string cli_cap_nascita { get; set; }
 		public long cli_att { get; set; }
 		public string cli_note { get; set; }
+
+		public double cli_capitale_sociale { get; set; }
+		public short cli_protesti { get; set; }
+		public short cli_cronaca_giud { get; set; }
+		public string cli_note_reputazione { get; set; }
 		public DateTime? cli_created_at { get; set; }
 		public DateTime? cli_last_update { get; set; }
 		public int cli_user { get; set; }

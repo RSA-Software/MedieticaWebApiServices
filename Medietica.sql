@@ -507,8 +507,12 @@ CREATE TABLE IF NOT EXISTS allegati
 	all_type_dod    INTEGER,
 	all_type_dop    INTEGER,
 	CONSTRAINT all_codice PRIMARY KEY (all_dit, all_type, all_doc, all_idx),
-	CONSTRAINT all_ditte_fkey FOREIGN KEY (all_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE
+	CONSTRAINT all_ditte_fkey FOREIGN KEY (all_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT all_doccli_fkey FOREIGN KEY (all_type_doc) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE
 )  PARTITION BY LIST (all_dit);
+
+ALTER TABLE allegati ADD CONSTRAINT all_doccli_fkey FOREIGN KEY (all_type_doc) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE;
+
 
 /*
 
@@ -526,6 +530,7 @@ CREATE TABLE IF NOT EXISTS allegati
 
 CREATE INDEX IF NOT EXISTS all_ditte ON allegati (all_dit);
 CREATE INDEX IF NOT EXISTS all_documenti ON allegati (all_dit, all_type_doc);
+
 /*
 CREATE INDEX IF NOT EXISTS all_doccantieri ON allegati (all_dit, all_type_dca);
 CREATE INDEX IF NOT EXISTS all_docditte ON allegati (all_dit, all_type_dod);
@@ -547,25 +552,25 @@ RETURNS TRIGGER AS $$
     	END IF;
 		IF (NEW.all_type = 0) THEN
             NEW.all_type_doc = NEW.all_doc;
-            NEW.all_type_doc = NULL;
+            NEW.all_type_dof = NULL;
             NEW.all_type_dod = NULL;
             NEW.all_type_dop = NULL;
         END IF;
 		IF (NEW.all_type = 1) THEN
             NEW.all_type_doc = NULL;
-            NEW.all_type_doc = NEW.all_doc;
+            NEW.all_type_dof = NEW.all_doc;
             NEW.all_type_dod = NULL;
             NEW.all_type_dop = NULL;
         END IF;
 		IF (NEW.all_type = 2) THEN
             NEW.all_type_doc = NULL;
-            NEW.all_type_doc = NULL;
+            NEW.all_type_dof = NULL;
             NEW.all_type_dod = NEW.all_doc;
             NEW.all_type_dop = NULL;
         END IF;
 		IF (NEW.all_type = 3) THEN
             NEW.all_type_doc = NULL;
-            NEW.all_type_doc = NULL;
+            NEW.all_type_dof = NULL;
             NEW.all_type_dod = NULL;
             NEW.all_type_dop = NEW.all_doc;
         END IF;
@@ -825,75 +830,329 @@ DO $$
 	END
 $$;
 
+/*
+*	Creazione Tabella Finalita
+*/
+CREATE TABLE IF NOT EXISTS finalita
+(
+	fin_codice			BIGSERIAL PRIMARY KEY,
+	fin_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	fin_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	fin_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	fin_user			INTEGER
+);
+CREATE INDEX fin_desc ON finalita (fin_desc, fin_codice);
+
+CREATE OR REPLACE FUNCTION fin_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.fin_desc		= TRIM(NEW.fin_desc);
+		NEW.fin_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.fin_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'fin_trigger') THEN
+			CREATE TRIGGER fin_trigger
+			BEFORE INSERT OR UPDATE ON finalita
+			FOR EACH ROW
+			EXECUTE PROCEDURE fin_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella settori
+*/
+CREATE TABLE IF NOT EXISTS settori
+(
+	set_codice			BIGSERIAL PRIMARY KEY,
+	set_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	set_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	set_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	set_user			INTEGER
+);
+CREATE INDEX set_desc ON settori (set_desc, set_codice);
+
+CREATE OR REPLACE FUNCTION set_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.set_desc		= TRIM(NEW.set_desc);
+		NEW.set_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.set_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_trigger') THEN
+			CREATE TRIGGER set_trigger
+			BEFORE INSERT OR UPDATE ON settori
+			FOR EACH ROW
+			EXECUTE PROCEDURE set_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella strumenti
+*/
+CREATE TABLE IF NOT EXISTS strumenti
+(
+	str_codice			BIGSERIAL PRIMARY KEY,
+	str_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	str_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	str_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	str_user			INTEGER
+);
+CREATE INDEX str_desc ON strumenti (str_desc, str_codice);
+
+CREATE OR REPLACE FUNCTION str_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.str_desc		= TRIM(NEW.str_desc);
+		NEW.str_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.str_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'str_trigger') THEN
+			CREATE TRIGGER str_trigger
+			BEFORE INSERT OR UPDATE ON strumenti
+			FOR EACH ROW
+			EXECUTE PROCEDURE str_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella garanzie
+*/
+CREATE TABLE IF NOT EXISTS garanzie
+(
+	gar_codice			BIGSERIAL PRIMARY KEY,
+	gar_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	gar_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	gar_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	gar_user			INTEGER
+);
+CREATE INDEX IF NOT EXISTS gar_desc ON garanzie (gar_desc, gar_codice);
+
+CREATE OR REPLACE FUNCTION gar_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.gar_desc		= TRIM(NEW.gar_desc);
+		NEW.gar_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.gar_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'gar_trigger') THEN
+			CREATE TRIGGER gar_trigger
+			BEFORE INSERT OR UPDATE ON garanzie
+			FOR EACH ROW
+			EXECUTE PROCEDURE gar_trigger_function();
+		END IF;
+	END
+$$;
+
+
+/*
+*	Creazione Tabella fabbisogno
+*/
+CREATE TABLE IF NOT EXISTS fabbisogno
+(
+	fab_codice			BIGSERIAL PRIMARY KEY,
+	fab_desc			VARCHAR (50) NOT NULL DEFAULT '',
+	fab_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	fab_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	fab_user			INTEGER
+);
+CREATE INDEX fab_desc ON fabbisogno (fab_desc, fab_codice);
+
+CREATE OR REPLACE FUNCTION fab_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.fab_desc		= TRIM(NEW.fab_desc);
+		NEW.fab_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.fab_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'fab_trigger') THEN
+			CREATE TRIGGER fab_trigger
+			BEFORE INSERT OR UPDATE ON fabbisogno
+			FOR EACH ROW
+			EXECUTE PROCEDURE fab_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella controparti
+*/
+CREATE TABLE IF NOT EXISTS controparti
+(
+	cnt_codice			BIGSERIAL PRIMARY KEY,
+	cnt_desc			VARCHAR (100) NOT NULL DEFAULT '',
+	cnt_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cnt_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cnt_user			INTEGER
+);
+CREATE INDEX cnt_desc ON controparti (cnt_desc, cnt_codice);
+
+CREATE OR REPLACE FUNCTION cnt_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.cnt_desc		= TRIM(NEW.cnt_desc);
+		NEW.cnt_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.cnt_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'cnt_trigger') THEN
+			CREATE TRIGGER cnt_trigger
+			BEFORE INSERT OR UPDATE ON controparti
+			FOR EACH ROW
+			EXECUTE PROCEDURE cnt_trigger_function();
+		END IF;
+	END
+$$;
 
 /*
 *	Creazione Tabella Clienti
 */
 CREATE TABLE IF NOT EXISTS clienti
 (
-	cli_codice			BIGSERIAL PRIMARY KEY,
-	cli_rag_soc1		VARCHAR (100)  NOT NULL DEFAULT '',
-	cli_rag_soc2		VARCHAR (100)  NOT NULL DEFAULT '',
-	cli_desc			VARCHAR (201)  NOT NULL DEFAULT '',
-	cli_tipo			SMALLINT NOT NULL DEFAULT 0,
-	cli_indirizzo		VARCHAR (100)  NOT NULL DEFAULT '',
-	cli_citta			VARCHAR (200)  NOT NULL DEFAULT '',
-	cli_cap				VARCHAR (5)    NOT NULL DEFAULT '',
-	cli_prov			VARCHAR (2)    NOT NULL DEFAULT '',
-	cli_piva			VARCHAR (28)   NOT NULL DEFAULT '',
-	cli_codfis			VARCHAR (16)   NOT NULL DEFAULT '',
-	cli_tipo			SMALLINT NOT NULL DEFAULT 0,
-	cli_email			VARCHAR (100)  NOT NULL DEFAULT '',
-	cli_web				TEXT NOT NULL DEFAULT '',
-	cli_pec				VARCHAR (100)  NOT NULL DEFAULT '',
-	cli_tel1			VARCHAR (15)   NOT NULL DEFAULT '',
-	cli_tel2			VARCHAR (15)   NOT NULL DEFAULT '',
-	cli_cel				VARCHAR (15)   NOT NULL DEFAULT '',
-	cli_per				BIGINT,
-	cli_gru				INTEGER,
-	cli_tat				BIGINT,
-	cli_inizio_attivita	DATE,
-	cli_ateco1			VARCHAR(20) NOT NULL DEFAULT '',
-	cli_ateco2			VARCHAR(20) NOT NULL DEFAULT '',
-	cli_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	cli_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	cli_user			INTEGER,
-	cli_interlocutore	VARCHAR(100) NOT NULL DEFAULT '',
-	cli_int_funzione	VARCHAR(100) NOT NULL DEFAULT '',
-	cli_int_telefono	VARCHAR(15) NOT NULL DEFAULT '',
-	cli_int_email		VARCHAR (100)  NOT NULL DEFAULT '',
-
-	cli_data_nascita	DATE,
-	cli_luogo_nascita	VARCHAR(100) NOT NULL DEFAULT '',
-	cli_prov_nascita	VARCHAR(2) NOT NULL DEFAULT '',
-	cli_cap_sacita		VARCHAR (5)    NOT NULL DEFAULT '',
-	cli_att				BIGINT,
-	cli_note			TEXT NOT NULL DEFAULT '',
-
-	tat_desc			VARCHAR (50) NOT NULL DEFAULT '',
-	tat_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	tat_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	tat_user			INTEGER
+	cli_codice				BIGSERIAL PRIMARY KEY,
+	cli_rag_soc1			VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_rag_soc2			VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_desc				VARCHAR (201)  NOT NULL DEFAULT '',
+	cli_tipo				SMALLINT NOT NULL DEFAULT 0,
+	cli_indirizzo			VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_citta				VARCHAR (200)  NOT NULL DEFAULT '',
+	cli_cap					VARCHAR (5)    NOT NULL DEFAULT '',
+	cli_prov				VARCHAR (2)    NOT NULL DEFAULT '',
+	cli_piva				VARCHAR (28)   NOT NULL DEFAULT '',
+	cli_codfis				VARCHAR (16)   NOT NULL DEFAULT '',
+	cli_email				VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_web					TEXT NOT NULL DEFAULT '',
+	cli_pec					VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_tel1				VARCHAR (15)   NOT NULL DEFAULT '',
+	cli_tel2				VARCHAR (15)   NOT NULL DEFAULT '',
+	cli_cel					VARCHAR (15)   NOT NULL DEFAULT '',
+	cli_pgi					BIGINT,
+	cli_gru					INTEGER,
+	cli_tat					BIGINT,
+	cli_inizio_attivita		DATE,
+	cli_ateco1				VARCHAR(20) NOT NULL DEFAULT '',
+	cli_ateco2				VARCHAR(20) NOT NULL DEFAULT '',
+	cli_interlocutore		VARCHAR(100) NOT NULL DEFAULT '',
+	cli_int_funzione		VARCHAR(100) NOT NULL DEFAULT '',
+	cli_int_telefono		VARCHAR(15) NOT NULL DEFAULT '',
+	cli_int_email			VARCHAR (100)  NOT NULL DEFAULT '',
+	cli_data_nascita		DATE,
+	cli_luogo_nascita		VARCHAR(100) NOT NULL DEFAULT '',
+	cli_prov_nascita		VARCHAR(2) NOT NULL DEFAULT '',
+	cli_cap_nascita			VARCHAR (5)    NOT NULL DEFAULT '',
+	cli_att					BIGINT,
+	cli_note				TEXT NOT NULL DEFAULT '',
+	cli_capitale_sociale 	DOUBLE PRECISION NOT NULL DEFAULT 0,
+	cli_protesti 			SMALLINT NOT NULL DEFAULT 0,
+	cli_cronaca_giud 		SMALLINT NOT NULL DEFAULT 0,
+	cli_note_reputazione	TEXT NOT NULL DEFAULT '',
+	cli_created_at			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cli_last_update			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cli_user				INTEGER,
+	CONSTRAINT clienti_pgi_fkey FOREIGN KEY (cli_pgi) REFERENCES persone_giuridiche (pgi_codice) ON UPDATE CASCADE ON DELETE RESTRICT,
+	CONSTRAINT clienti_gru_fkey FOREIGN KEY (cli_gru) REFERENCES gruppi (gru_codice) ON UPDATE CASCADE ON DELETE RESTRICT,
+	CONSTRAINT clienti_tat_fkey FOREIGN KEY (cli_tat) REFERENCES tipologia_attivita (tat_codice) ON UPDATE CASCADE ON DELETE RESTRICT,
+	CONSTRAINT clienti_att_fkey FOREIGN KEY (cli_att) REFERENCES attivita (att_codice) ON UPDATE CASCADE ON DELETE RESTRICT
 );
-CREATE INDEX cli_desc ON clienti (cli_desc, cli_codice);
+CREATE INDEX IF NOT EXISTS cli_desc ON clienti (cli_desc, cli_codice);
+CREATE INDEX IF NOT EXISTS cli_pgi ON clienti (cli_pgi, cli_codice);
+CREATE INDEX IF NOT EXISTS cli_gru ON clienti (cli_gru, cli_codice);
+CREATE INDEX IF NOT EXISTS cli_tat ON clienti (cli_tat, cli_codice);
+CREATE INDEX IF NOT EXISTS cli_att ON clienti (cli_att, cli_codice);
+
+ALTER TABLE clienti
+	ADD COLUMN IF NOT EXISTS cli_capitale_sociale 	DOUBLE PRECISION NOT NULL DEFAULT 0,
+	ADD COLUMN IF NOT EXISTS cli_protesti 			SMALLINT NOT NULL DEFAULT 0,
+	ADD COLUMN IF NOT EXISTS cli_cronaca_giud 		SMALLINT NOT NULL DEFAULT 0,
+	ADD COLUMN IF NOT EXISTS cli_note_reputazione	TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE clienti
+	DROP COLUMN IF EXISTS cli_capitale_sociale;
 
 CREATE OR REPLACE FUNCTION cli_trigger_function()
 RETURNS TRIGGER AS $$
 	BEGIN
-	    NEW.cli_rag_soc1	= TRIM(NEW.cli_rag_soc1);
-	    NEW.cli_rag_soc2	= TRIM(NEW.cli_rag_soc2);
-	    NEW.cli_desc		= TRIM(NEW.cli_rag_soc1 || ' ' || NEW.cli_rag_soc2);
-	    NEW.cli_indirizzo	= TRIM(NEW.cli_indirizzo);
-	    NEW.cli_citta		= TRIM(NEW.cli_citta);
-	    NEW.cli_cap			= TRIM(NEW.cli_cap);
-	    NEW.cli_prov		= TRIM(NEW.cli_prov);
-	    NEW.cli_piva		= TRIM(NEW.cli_piva);
-	    NEW.cli_codfis		= TRIM(NEW.cli_codfis);
-	    NEW.cli_email		= LOWER(TRIM(NEW.cli_email));
-	    NEW.cli_web			= TRIM(NEW.cli_web);
-
-
-		NEW.cli_last_update	= NOW();
+	    NEW.cli_rag_soc1		= TRIM(NEW.cli_rag_soc1);
+	    NEW.cli_rag_soc2		= TRIM(NEW.cli_rag_soc2);
+	    NEW.cli_desc			= TRIM(NEW.cli_rag_soc1 || ' ' || NEW.cli_rag_soc2);
+	    NEW.cli_indirizzo		= TRIM(NEW.cli_indirizzo);
+	    NEW.cli_citta			= TRIM(NEW.cli_citta);
+	    NEW.cli_cap				= TRIM(NEW.cli_cap);
+	    NEW.cli_prov			= TRIM(NEW.cli_prov);
+	    NEW.cli_piva			= TRIM(NEW.cli_piva);
+	    NEW.cli_codfis			= TRIM(NEW.cli_codfis);
+	    NEW.cli_email			= LOWER(TRIM(NEW.cli_email));
+	    NEW.cli_web				= TRIM(NEW.cli_web);
+	    NEW.cli_pec				= LOWER(TRIM(NEW.cli_pec));
+		NEW.cli_tel1			= TRIM(NEW.cli_tel1);
+	    NEW.cli_tel2			= TRIM(NEW.cli_tel2);
+	    NEW.cli_cel				= TRIM(NEW.cli_cel);
+	    NEW.cli_ateco1			= TRIM(NEW.cli_ateco1);
+	    NEW.cli_ateco2			= TRIM(NEW.cli_ateco2);
+	    NEW.cli_interlocutore	= TRIM(NEW.cli_interlocutore);
+	    NEW.cli_int_funzione	= TRIM(NEW.cli_int_funzione);
+	    NEW.cli_int_telefono	= TRIM(NEW.cli_int_telefono);
+	    NEW.cli_int_email		= LOWER(TRIM(NEW.cli_int_email));
+	    NEW.cli_luogo_nascita	= TRIM(NEW.cli_luogo_nascita);
+	    NEW.cli_prov_nascita	= TRIM(NEW.cli_prov_nascita);
+	    NEW.cli_cap_nascita		= TRIM(NEW.cli_cap_nascita);
+	    NEW.cli_note			= TRIM(NEW.cli_note);
+		NEW.cli_last_update		= NOW();
+	    if (NEW.cli_pgi = 0) THEN
+			NEW.cli_pgi = NULL;
+		END IF;
+	    if (NEW.cli_gru = 0) THEN
+			NEW.cli_gru = NULL;
+		END IF;
+	    if (NEW.cli_tat = 0) THEN
+			NEW.cli_tat = NULL;
+		END IF;
+	    if (NEW.cli_att = 0) THEN
+			NEW.cli_att = NULL;
+		END IF;
    	    IF  (TG_OP = 'INSERT') THEN
            NEW.cli_created_at	= NOW();
     	END IF;
@@ -903,23 +1162,317 @@ $$ language 'plpgsql';
 
 DO $$
 	BEGIN
-		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'tat_trigger') THEN
-			CREATE TRIGGER tat_trigger
-			BEFORE INSERT OR UPDATE ON tipologia_attivita
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'cli_trigger') THEN
+			CREATE TRIGGER cli_trigger
+			BEFORE INSERT OR UPDATE ON clienti
 			FOR EACH ROW
-			EXECUTE PROCEDURE tat_trigger_function();
+			EXECUTE PROCEDURE cli_trigger_function();
 		END IF;
 	END
 $$;
 
+/*
+	Tabella Immagini imgclienti
+*/
+CREATE TABLE IF NOT EXISTS imgclienti
+(
+	img_dit			BIGINT NOT NULL DEFAULT 0,
+	img_codice		BIGINT NOT NULL CHECK(img_codice > 0),
+	img_formato		SMALLINT NOT NULL DEFAULT 0,
+	img_tipo		SMALLINT NOT NULL DEFAULT 0,
+	img_bytes_size	INTEGER NOT NULL DEFAULT 0,
+	img_created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_last_update	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_data		BYTEA,
+	CONSTRAINT imc_codice PRIMARY KEY (img_dit, img_codice, img_formato),
+	CONSTRAINT imc_dit_fkey FOREIGN KEY (img_dit) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT imc_cli_fkey FOREIGN KEY (img_codice) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS imc_ditte ON imgclienti (img_dit, img_codice);
+CREATE INDEX IF NOT EXISTS imc_clienti ON imgclienti (img_codice);
 
+CREATE OR REPLACE FUNCTION imc_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.img_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.img_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
 
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'imc_trigger') THEN
+			CREATE TRIGGER imc_trigger
+			BEFORE INSERT OR UPDATE ON imgclienti
+			FOR EACH ROW
+			EXECUTE PROCEDURE imc_trigger_function();
+		END IF;
+	END
+$$;
 
+/*
+ 	Tabella Comuni
+ */
+ /*
+CREATE TABLE IF NOT EXISTS comuni
+(
+    com_codice_regione				INTEGER NOT NULL DEFAULT 0,
+    com_codice_citta_metropolitana	INTEGER NOT NULL DEFAULT 0,
+	com_codice_provincia			INTEGER NOT NULL DEFAULT 0,
+	com_codice						INTEGER NOT NULL DEFAULT 0,
+	com_desc						VARCHAR(50) NOT NULL DEFAULT '',
+	com_ripartizione_geofrafica		VARCHAR(30) NOT NULL DEFAULT 0,
+	com_desc_regione				VARCHAR(30) NOT NULL DEFAULT '',
+	com_desc_citta_metropolitana	VARCHAR(30) NOT NULL DEFAULT '',
+	com_prov						VARCHAR(2) NOT NULL DEFAULT '',
+	com_codice_catastale			VARCHAR(4) NOT NULL DEFAULT '',
+	com_cap							VARCHAR(5) DEFAULT '',
+	com_created_at					TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	com_last_update					TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	com_user						INTEGER,
+	CONSTRAINT com_codice PRIMARY KEY (com_codice),
+	CONSTRAINT comuni_com_codice_check CHECK (com_codice >= 0)
+);
+CREATE INDEX IF NOT EXISTS com_desc ON comuni (com_desc, com_codice);
+CREATE INDEX IF NOT EXISTS com_prov ON comuni (com_prov, com_codice);
 
+CREATE OR REPLACE FUNCTION com_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.com_desc		= TRIM(NEW.com_desc);
+	    NEW.com_prov		= TRIM(NEW.com_prov);
+	    NEW.com_codice_catastale	= TRIM(NEW.com_codice_catastale);
+	    NEW.com_cap			= TRIM(NEW.com_cap);
+	    NEW.com_ripartizione_geofrafica	= TRIM(NEW.com_ripartizione_geofrafica);
+	    NEW.com_desc_regione	= TRIM(NEW.com_desc_regione);
+	    NEW.com_desc_citta_metropolitana	= TRIM(NEW.com_desc_citta_metropolitana);
+		NEW.com_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.com_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
 
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'com_trigger') THEN
+			CREATE TRIGGER com_trigger
+			BEFORE INSERT OR UPDATE ON comuni
+			FOR EACH ROW
+			EXECUTE PROCEDURE com_trigger_function();
+		END IF;
+	END
+$$;
 
+*/
 
+/*
+	Tabella Reputazione
+*/
+CREATE TABLE IF NOT EXISTS reputazione
+(
+    scd_dit					INTEGER NOT NULL,
+	scd_codice				INTEGER NOT NULL DEFAULT 1,
+	scd_data				DATE,
+	scd_desc				VARCHAR(512) NOT NULL DEFAULT '',
+	scd_scad_alert_before	SMALLINT NOT NULL DEFAULT 0,
+	scd_scad_alert_after	SMALLINT NOT NULL DEFAULT 0,
+	scd_created_at			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	scd_last_update			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT scd_codice PRIMARY KEY (scd_dit, scd_codice),
+	CONSTRAINT scd_ditte_fkey FOREIGN KEY (scd_dit) REFERENCES ditte (dit_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX scd_desc ON scaditte (scd_desc, scd_dit, scd_codice);
 
+CREATE OR REPLACE FUNCTION scd_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.scd_desc		= TRIM(NEW.scd_desc);
+		NEW.scd_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.scd_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'scd_trigger') THEN
+			CREATE TRIGGER scd_trigger
+			BEFORE INSERT OR UPDATE ON scaditte
+			FOR EACH ROW
+			EXECUTE PROCEDURE scd_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella fornitori
+*/
+CREATE TABLE IF NOT EXISTS fornitori
+(
+	for_codice 	    BIGSERIAL PRIMARY KEY,
+	for_rag_soc1 		VARCHAR (50) NOT NULL DEFAULT '',
+	for_rag_soc2 		VARCHAR (50) NOT NULL DEFAULT '',
+	for_desc			VARCHAR (101) NOT NULL DEFAULT '',
+	for_indirizzo		VARCHAR (100) NOT NULL DEFAULT '',
+	for_citta			VARCHAR (50) NOT NULL DEFAULT '',
+	for_cap				VARCHAR (5) NOT NULL DEFAULT '',
+	for_prov			VARCHAR (2) NOT NULL DEFAULT '',
+	for_piva			VARCHAR (28) NOT NULL DEFAULT '',
+	for_codfis			VARCHAR (16) NOT NULL DEFAULT '',
+	for_note 			TEXT NOT NULL DEFAULT '',
+	for_email			VARCHAR (100) NOT NULL DEFAULT '',
+    for_pec				VARCHAR (100) NOT NULL DEFAULT '',
+    for_tel1			VARCHAR(15) NOT NULL DEFAULT '',
+    for_tel2			VARCHAR(15) NOT NULL DEFAULT '',
+    for_cel				VARCHAR(15) NOT NULL DEFAULT '',
+	for_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	for_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	for_user			INTEGER
+);
+CREATE INDEX IF NOT EXISTS for_desc ON fornitori (for_desc, for_codice);
+
+CREATE OR REPLACE FUNCTION for_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.for_rag_soc1	= TRIM(NEW.for_rag_soc1);
+	    NEW.for_rag_soc2	= TRIM(NEW.for_rag_soc2);
+	    NEW.for_indirizzo	= TRIM(NEW.for_indirizzo);
+	    NEW.for_citta		= TRIM(NEW.for_citta);
+	    NEW.for_cap			= TRIM(NEW.for_cap);
+	    NEW.for_prov		= TRIM(NEW.for_prov);
+	    NEW.for_piva		= TRIM(NEW.for_piva);
+	    NEW.for_codfis		= TRIM(NEW.for_codfis);
+		NEW.for_desc     	= TRIM(CONCAT(TRIM(NEW.for_rag_soc1), ' ', TRIM(NEW.for_rag_soc2)));
+	    NEW.for_note		= TRIM(NEW.for_note);
+	    NEW.for_email		= LOWER(TRIM(NEW.for_email));
+	    NEW.for_pec			= LOWER(TRIM(NEW.for_pec));
+	    NEW.for_tel1		= TRIM(NEW.for_tel1);
+	    NEW.for_tel2		= TRIM(NEW.for_tel2);
+	    NEW.for_cel			= TRIM(NEW.for_cel);
+		NEW.for_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+        	NEW.for_created_at	= NOW();
+        END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'for_trigger') THEN
+			CREATE TRIGGER for_trigger
+			BEFORE INSERT OR UPDATE ON fornitori
+			FOR EACH ROW
+			EXECUTE PROCEDURE for_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+	Tabella Immagini imgfornitori
+*/
+CREATE TABLE IF NOT EXISTS imgfornitori
+(
+	img_dit			BIGINT NOT NULL DEFAULT 0,
+	img_codice		BIGINT NOT NULL CHECK(img_codice > 0),
+	img_formato		SMALLINT NOT NULL DEFAULT 0,
+	img_tipo		SMALLINT NOT NULL DEFAULT 0,
+	img_bytes_size	INTEGER NOT NULL DEFAULT 0,
+	img_created_at	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_last_update	TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	img_data		BYTEA,
+	CONSTRAINT imf_codice PRIMARY KEY (img_dit, img_codice, img_formato),
+	CONSTRAINT imf_dit_fkey FOREIGN KEY (img_dit) REFERENCES fornitori (for_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT imf_for_fkey FOREIGN KEY (img_codice) REFERENCES fornitori (for_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS imf_ditte ON imgfornitori (img_dit, img_codice);
+CREATE INDEX IF NOT EXISTS imf_fornitori ON imgfornitori (img_codice);
+
+CREATE OR REPLACE FUNCTION imf_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.img_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.img_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'imf_trigger') THEN
+			CREATE TRIGGER imf_trigger
+			BEFORE INSERT OR UPDATE ON imgfornitori
+			FOR EACH ROW
+			EXECUTE PROCEDURE imf_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella componenti_famiglie
+*/
+CREATE TABLE IF NOT EXISTS componenti
+(
+	cfa_codice 	    	BIGSERIAL PRIMARY KEY,
+	cfa_cli				BIGINT,
+	cfa_att				BIGINT,
+	cfa_cognome 		VARCHAR (50) NOT NULL DEFAULT '',
+	cfa_nome	 		VARCHAR (50) NOT NULL DEFAULT '',
+	cfa_desc			VARCHAR (101) NOT NULL DEFAULT '',
+	cfa_data_nascita	DATE,
+	cfa_luogo_nascita	VARCHAR (100) NOT NULL DEFAULT '',
+	cfa_prov_nascita	VARCHAR (2) NOT NULL DEFAULT '',
+	cfa_cap_nascita		VARCHAR (5) NOT NULL DEFAULT '',
+	cfa_codfis			VARCHAR (16) NOT NULL DEFAULT '',
+	cfa_parentela		VARCHAR (100) NOT NULL DEFAULT '',
+	cfa_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cfa_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cfa_user			INTEGER,
+	CONSTRAINT cfa_cli_fkey FOREIGN KEY (cfa_cli) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT cfa_att_fkey FOREIGN KEY (cfa_att) REFERENCES attivita (att_codice) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE INDEX cfa_desc ON componenti (cfa_desc, cfa_codice);
+CREATE INDEX cfa_cliente ON componenti (cfa_cli, cfa_codice);
+CREATE INDEX cfa_attivita ON componenti (cfa_att, cfa_codice);
+
+CREATE OR REPLACE FUNCTION cfa_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.cfa_cognome			= TRIM(NEW.cfa_cognome);
+	    NEW.cfa_nome			= TRIM(NEW.cfa_nome);
+	    NEW.cfa_desc			= TRIM(CONCAT(TRIM(NEW.cfa_cognome), ' ', TRIM(NEW.cfa_nome)));
+	    NEW.cfa_luogo_nascita	= TRIM(NEW.cfa_luogo_nascita);
+	    NEW.cfa_prov_nascita	= TRIM(NEW.cfa_prov_nascita);
+	    NEW.cfa_cap_nascita		= TRIM(NEW.cfa_cap_nascita);
+	    NEW.cfa_codfis			= UPPER(TRIM(NEW.cfa_codfis));
+	    NEW.cfa_parentela		= TRIM(NEW.cfa_parentela);
+		NEW.cfa_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+        	NEW.cfa_created_at	= NOW();
+        END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'cfa_trigger') THEN
+			CREATE TRIGGER cfa_trigger
+			BEFORE INSERT OR UPDATE ON componenti
+			FOR EACH ROW
+			EXECUTE PROCEDURE cfa_trigger_function();
+		END IF;
+	END
+$$;
 
 
 

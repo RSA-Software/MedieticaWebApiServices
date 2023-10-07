@@ -13,12 +13,12 @@ namespace MedieticaWebApiService.Controller
 {
 	[EnableCors("*", "*", "*")]
 
-	public class ClientiController : ApiController
+	public class FornitoriController : ApiController
 	{
 		[HttpGet]
-		[Route("api/clienti/blank")]
-		[Route("api/clienti/blank/{ditta}")]
-		public DefaultJson<ClientiDb> Blank(int ditta = 0)
+		[Route("api/fornitori/blank")]
+		[Route("api/fornitori/blank/{ditta}")]
+		public DefaultJson<FornitoriDb> Blank(int ditta = 0)
 		{
 			try
 			{
@@ -26,19 +26,16 @@ namespace MedieticaWebApiService.Controller
 				{
 					connection.Open();
 					var cmd = new OdbcCommand { Connection = connection };
-					var json = new DefaultJson<ClientiDb>();
+					var json = new DefaultJson<FornitoriDb>();
 
-					cmd.CommandText = DbUtils.QueryAdapt("SELECT COALESCE(MAX(cli_codice),0) AS codice FROM clienti");
+					cmd.CommandText = DbUtils.QueryAdapt("SELECT COALESCE(MAX(for_codice),0) AS codice FROM fornitori");
 					var reader = cmd.ExecuteReader();
 					while (reader.Read())
 					{
-						var cli = new ClientiDb();
-						cli.cli_tipo = (short)ClientiTipo.CLI_TYPE_SELECT;
-						cli.cli_protesti = -1;
-						cli.cli_cronaca_giud = -1;
-						cli.cli_codice = 1 + reader.GetInt64(reader.GetOrdinal("codice"));
-						if (json.Data == null) json.Data = new List<ClientiDb>();
-						json.Data.Add(cli);
+						var forn = new FornitoriDb();
+						forn.for_codice = 1 + reader.GetInt64(reader.GetOrdinal("codice"));
+						if (json.Data == null) json.Data = new List<FornitoriDb>();
+						json.Data.Add(forn);
 						json.RecordsTotal++;
 					}
 					reader.Close();
@@ -68,8 +65,8 @@ namespace MedieticaWebApiService.Controller
 
 
 		[HttpGet]
-		[Route("api/clienti/get")]
-		public DefaultJson<ClientiDb> GetList(int top = 0, int skip = 0, string orderby = "", string search = "", string filter = "", bool inlinecount = false, bool joined = false)
+		[Route("api/fornitori/get")]
+		public DefaultJson<FornitoriDb> GetList(int top = 0, int skip = 0, string orderby = "", string search = "", string filter = "", bool inlinecount = false, bool joined = false)
 		{
 			if (filter.SqlDangerCheck()) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Danger filter value"));
 			if (search.SqlDangerCheck()) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Danger search value"));
@@ -79,7 +76,7 @@ namespace MedieticaWebApiService.Controller
 			{
 				using (var connection = new OdbcConnection(DbUtils.GetConnectionString()))
 				{
-					var json = new DefaultJson<ClientiDb>();
+					var json = new DefaultJson<FornitoriDb>();
 
 					connection.Open();
 					var cmd = new OdbcCommand { Connection = connection };
@@ -91,20 +88,20 @@ namespace MedieticaWebApiService.Controller
 					if (inlinecount)
 					{
 						if (joined)
-							query = ClientiDb.GetCountQuery();
+							query = FornitoriDb.GetCountQuery();
 						else
-							query = "SELECT COUNT(*) FROM clienti";
+							query = "SELECT COUNT(*) FROM fornitori";
 						if (string.IsNullOrWhiteSpace(filter))
-							query += " WHERE cli_codice > 0";
+							query += " WHERE for_codice > 0";
 						else
-							query += $" WHERE cli_codice > 0 AND ({filter})";
+							query += $" WHERE for_codice > 0 AND ({filter})";
 
 						if (!string.IsNullOrWhiteSpace(search))
 						{
 							if (joined)
-								query += $" AND (cli_desc ILIKE {str} OR TRIM(CAST(cli_codice AS VARCHAR(15))) ILIKE {str})";
+								query += $" AND (for_desc ILIKE {str} OR TRIM(CAST(for_codice AS VARCHAR(15))) ILIKE {str})";
 							else
-								query += $" AND (cli_desc ILIKE {str} OR TRIM(CAST(cli_codice AS VARCHAR(15))) ILIKE {str})";
+								query += $" AND (for_desc ILIKE {str} OR TRIM(CAST(for_codice AS VARCHAR(15))) ILIKE {str})";
 						}
 
 						cmd.CommandText = DbUtils.QueryAdapt(query);
@@ -112,24 +109,24 @@ namespace MedieticaWebApiService.Controller
 					}
 
 					if (joined)
-						query = ClientiDb.GetJoinQuery();
+						query = FornitoriDb.GetJoinQuery();
 					else
-						query = "SELECT * FROM clienti";
+						query = "SELECT * FROM fornitori";
 						
 					if (string.IsNullOrWhiteSpace(filter))
-						query += " WHERE cli_codice > 0";
+						query += " WHERE for_codice > 0";
 					else 
-						query += " WHERE cli_codice > 0 AND (" + filter + ")";
+						query += " WHERE for_codice > 0 AND (" + filter + ")";
 
 					if (!string.IsNullOrWhiteSpace(search))
 					{
 						if (joined)
-							query += $" AND (cli_desc ILIKE {str} OR TRIM(CAST(cli_codice AS VARCHAR(15))) ILIKE {str})";
+							query += $" AND (for_desc ILIKE {str} OR TRIM(CAST(for_codice AS VARCHAR(15))) ILIKE {str})";
 						else
-							query += $" AND (cli_desc ILIKE {str} OR TRIM(CAST(cli_codice AS VARCHAR(15))) ILIKE {str})";
+							query += $" AND (for_desc ILIKE {str} OR TRIM(CAST(for_codice AS VARCHAR(15))) ILIKE {str})";
 					}
 					if (string.IsNullOrWhiteSpace(orderby))
-						query += " ORDER BY cli_codice";
+						query += " ORDER BY for_codice";
 					else
 						query += " ORDER BY " + orderby;
 					cmd.CommandText = DbUtils.QueryAdapt(query, top, skip);
@@ -137,10 +134,10 @@ namespace MedieticaWebApiService.Controller
 					var reader = cmd.ExecuteReader();
 					while (reader.Read())
 					{
-						var cli = new ClientiDb();
-						DbUtils.SqlRead(ref reader, ref cli, joined ? null : ClientiDb.GetJoinExcludeFields());
-						if (json.Data == null) json.Data = new List<ClientiDb>();
-						json.Data.Add(cli);
+						var forn = new FornitoriDb();
+						DbUtils.SqlRead(ref reader, ref forn, joined ? null : FornitoriDb.GetJoinExcludeFields());
+						if (json.Data == null) json.Data = new List<FornitoriDb>();
+						json.Data.Add(forn);
 						json.RecordsTotal++;
 					}
 					reader.Close();
@@ -174,10 +171,10 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpGet]
-		[Route("api/clienti/get/{codice}")]
-		[Route("api/clienti/get/{codice}/{joined}")]
-		[Route("api/clienti/get/{codice}/{joined}/{fulljoined}")]
-		public DefaultJson<ClientiDb> Get(int codice, bool joined = false, bool fulljoined = false)
+		[Route("api/fornitori/get/{codice}")]
+		[Route("api/fornitori/get/{codice}/{joined}")]
+		[Route("api/fornitori/get/{codice}/{joined}/{fulljoined}")]
+		public DefaultJson<FornitoriDb> Get(int codice, bool joined = false, bool fulljoined = false)
 		{
 			try
 			{
@@ -187,36 +184,36 @@ namespace MedieticaWebApiService.Controller
 					var cmd = new OdbcCommand { Connection = connection };
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.VIEW);
 
-					var json = new DefaultJson<ClientiDb>();
-					var cli = new ClientiDb();
-					if (ClientiDb.Search(ref cmd,  codice, ref cli, joined || fulljoined))
+					var json = new DefaultJson<FornitoriDb>();
+					var forn = new FornitoriDb();
+					if (FornitoriDb.Search(ref cmd,  codice, ref forn, joined || fulljoined))
 					{
-						cli.img_list = new List<ImgClientiDb>();
-						if (json.Data == null) json.Data = new List<ClientiDb>();
+						forn.img_list = new List<ImgFornitoriDb>();
+						if (json.Data == null) json.Data = new List<FornitoriDb>();
 						if (fulljoined)
 						{
 							DbUtils.GetTokenLevel(Request);
 
 							cmd.CommandText = @"
 							SELECT * 
-							FROM imgclienti 
+							FROM imgfornitori 
 							WHERE img_dit = ? AND img_codice = ? AND Mod(img_formato, 2) = 0
 							ORDER BY img_formato
 							";
 
 							cmd.Parameters.Clear();
-							cmd.Parameters.Add("ditta", OdbcType.Int).Value = cli.cli_codice;
-							cmd.Parameters.Add("codice", OdbcType.Int).Value = cli.cli_codice;
+							cmd.Parameters.Add("ditta", OdbcType.Int).Value = forn.for_codice;
+							cmd.Parameters.Add("codice", OdbcType.Int).Value = forn.for_codice;
 							var reader = cmd.ExecuteReader();
 							while (reader.Read())
 							{
-								var img = new ImgClientiDb();
+								var img = new ImgFornitoriDb();
 								DbUtils.SqlRead(ref reader, ref img);
-								cli.img_list.Add(img);
+								forn.img_list.Add(img);
 							}
 							reader.Close();
 						}
-						json.Data.Add(cli);
+						json.Data.Add(forn);
 						json.RecordsTotal++;
 					}
 
@@ -248,8 +245,8 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpPost]
-		[Route("api/clienti/post")]
-		public DefaultJson<ClientiDb> Post([FromBody] DefaultJson<ClientiDb> value)
+		[Route("api/fornitori/post")]
+		public DefaultJson<FornitoriDb> Post([FromBody] DefaultJson<FornitoriDb> value)
 		{
 			if (value == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null input value"));
 			if (value.Data == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null Data value"));
@@ -264,45 +261,28 @@ namespace MedieticaWebApiService.Controller
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.ADD);
 					var codute = DbUtils.GetTokenUser(Request);
 
-					var json = new DefaultJson<ClientiDb>();
-					foreach (var cli in value.Data)
+					var json = new DefaultJson<FornitoriDb>();
+					foreach (var forn in value.Data)
 					{
 						object obj = null;
-						var val = cli;
+						var val = forn;
 
-						cli.cli_rag_soc1 = val.cli_rag_soc1.Trim();
-						val.cli_rag_soc2 = val.cli_rag_soc2.Trim();
-						val.cli_desc = (val.cli_rag_soc1 + " " + val.cli_rag_soc2).Trim();
-						val.cli_codfis = val.cli_codfis.Trim().ToUpper();
-						val.cli_piva = val.cli_piva.Trim().ToUpper();
-						val.cli_user = codute;
+						forn.for_rag_soc1 = val.for_rag_soc1.Trim();
+						val.for_rag_soc2 = val.for_rag_soc2.Trim();
+						val.for_desc = (val.for_rag_soc1 + " " + val.for_rag_soc2).Trim();
+						val.for_codfis = val.for_codfis.Trim().ToUpper();
+						val.for_piva = val.for_piva.Trim().ToUpper();
+						val.for_user = codute;
 
-						if (string.IsNullOrWhiteSpace(val.cli_rag_soc1))
+						if (string.IsNullOrWhiteSpace(val.for_rag_soc1))
 						{
 							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Ragione Sociale/Cognome vuota"));
 							continue;
 						}
 
-						if (cli.cli_tipo != (short)ClientiTipo.CLI_TYPE_IMPRESE && string.IsNullOrWhiteSpace(val.cli_rag_soc2))
-						{
-							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Nome vuoto"));
-							continue;
-						}
+						DbUtils.SqlWrite(ref cmd, FornitoriDb.Write, DbMessage.DB_INSERT, ref val, ref obj, true);
 
-						if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_IMPRESE && string.IsNullOrWhiteSpace(val.cli_piva))
-						{
-							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Partita IVA vuota"));
-							continue;
-						}
-						if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_PRIVATI && string.IsNullOrWhiteSpace(val.cli_codfis))
-						{
-							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Codice Fiscale vuoto"));
-							continue;
-						}
-
-						DbUtils.SqlWrite(ref cmd, ClientiDb.Write, DbMessage.DB_INSERT, ref val, ref obj, true);
-
-						if (json.Data == null) json.Data = new List<ClientiDb>();
+						if (json.Data == null) json.Data = new List<FornitoriDb>();
 						json.Data.Add(val);
 						json.RecordsTotal++;
 					}
@@ -334,8 +314,8 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpPut]
-		[Route("api/clienti/put/{codice}")]
-		public DefaultJson<ClientiDb> Put(int codice, [FromBody]DefaultJson<ClientiDb> value)
+		[Route("api/fornitori/put/{codice}")]
+		public DefaultJson<FornitoriDb> Put(int codice, [FromBody]DefaultJson<FornitoriDb> value)
 		{
 			if (value == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null input value"));
 			if (value.Data == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null Data value"));
@@ -350,29 +330,26 @@ namespace MedieticaWebApiService.Controller
 					var cmd = new OdbcCommand { Connection = connection };
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.UPDATE);
 
-					var cli = value.Data[0];
-					if (cli.cli_codice != codice) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Id risorsa non corrisponde all'id dei dati"));
+					var forn = value.Data[0];
+					if (forn.for_codice != codice) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Id risorsa non corrisponde all'id dei dati"));
 
-					cli.cli_rag_soc1 = cli.cli_rag_soc1.Trim();
-					cli.cli_rag_soc2 = cli.cli_rag_soc2.Trim();
-					cli.cli_desc = (cli.cli_rag_soc1 + " " + cli.cli_rag_soc2).Trim();
-					cli.cli_codfis = cli.cli_codfis.Trim().ToUpper();
-					cli.cli_piva = cli.cli_piva.Trim().ToUpper();
-					cli.cli_user = DbUtils.GetTokenUser(Request);
+					forn.for_rag_soc1 = forn.for_rag_soc1.Trim();
+					forn.for_rag_soc2 = forn.for_rag_soc2.Trim();
+					forn.for_desc = (forn.for_rag_soc1 + " " + forn.for_rag_soc2).Trim();
+					forn.for_codfis = forn.for_codfis.Trim().ToUpper();
+					forn.for_piva = forn.for_piva.Trim().ToUpper();
+					forn.for_user = DbUtils.GetTokenUser(Request);
 
-					if (string.IsNullOrWhiteSpace(cli.cli_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Rgione Sociale /Cognome vuota"));
-					if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_PRIVATI && string.IsNullOrWhiteSpace(cli.cli_rag_soc2)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Nome vuoto"));
-					if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_IMPRESE && string.IsNullOrWhiteSpace(cli.cli_piva)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Partita IVA vuota"));
-					if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_PRIVATI && string.IsNullOrWhiteSpace(cli.cli_codfis)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Codice Fiscale vuoto"));
+					if (string.IsNullOrWhiteSpace(forn.for_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Rgione Sociale /Cognome vuota"));
 
 					object obj = null;
 					
-					var json = new DefaultJson<ClientiDb>();
-					DbUtils.SqlWrite(ref cmd, ClientiDb.Write, DbMessage.DB_UPDATE, ref cli, ref obj, true);
+					var json = new DefaultJson<FornitoriDb>();
+					DbUtils.SqlWrite(ref cmd, FornitoriDb.Write, DbMessage.DB_UPDATE, ref forn, ref obj, true);
 
 					connection.Close();
-					if (json.Data == null) json.Data = new List<ClientiDb>();
-					json.Data.Add(cli);
+					if (json.Data == null) json.Data = new List<FornitoriDb>();
+					json.Data.Add(forn);
 					json.RecordsTotal++;
 
 					return (json);
@@ -402,7 +379,7 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpDelete]
-		[Route("api/clienti/delete/{codice}")]
+		[Route("api/fornitori/delete/{codice}")]
 		public void Delete(int codice)
 		{
 			try
@@ -413,11 +390,11 @@ namespace MedieticaWebApiService.Controller
 					var cmd = new OdbcCommand { Connection = connection };
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.DELETE);
 
-					var val = new ClientiDb();
-					if (!ClientiDb.Search(ref cmd, codice, ref val)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.NotFound, "Risorsa non trovata"));
+					var val = new FornitoriDb();
+					if (!FornitoriDb.Search(ref cmd, codice, ref val)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.NotFound, "Risorsa non trovata"));
 
 					object obj = null;
-					DbUtils.SqlWrite(ref cmd, ClientiDb.Write, DbMessage.DB_DELETE, ref val, ref obj);
+					DbUtils.SqlWrite(ref cmd, FornitoriDb.Write, DbMessage.DB_DELETE, ref val, ref obj);
 
 					connection.Close();
 				}
