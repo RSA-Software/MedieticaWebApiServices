@@ -1456,6 +1456,9 @@ RETURNS TRIGGER AS $$
 	    NEW.cfa_codfis			= UPPER(TRIM(NEW.cfa_codfis));
 	    NEW.cfa_parentela		= TRIM(NEW.cfa_parentela);
 		NEW.cfa_last_update	= NOW();
+	    IF NEW.cfa_att = 0 THEN
+			NEW.cfa_att = NULL;
+		END IF;
    	    IF  (TG_OP = 'INSERT') THEN
         	NEW.cfa_created_at	= NOW();
         END IF;
@@ -1474,6 +1477,59 @@ DO $$
 	END
 $$;
 
+/*
+*	Creazione Tabella Soci
+*/
+CREATE TABLE IF NOT EXISTS soci
+(
+	soc_codice 	    	BIGSERIAL PRIMARY KEY,
+	soc_cli				BIGINT,
+	soc_desc 			VARCHAR (101) NOT NULL DEFAULT '',
+	soc_data_nascita	DATE,
+	soc_luogo_nascita	VARCHAR (100) NOT NULL DEFAULT '',
+	soc_prov_nascita	VARCHAR (2) NOT NULL DEFAULT '',
+	soc_cap_nascita		VARCHAR (5) NOT NULL DEFAULT '',
+	soc_codfis			VARCHAR (16) NOT NULL DEFAULT '',
+	soc_esposto			SMALLINT NOT NULL DEFAULT 0,
+	soc_disponibile		SMALLINT NOT NULL DEFAULT 0,
+	soc_percentuale		DOUBLE PRECISION NOT NULL DEFAULT 0,
+	soc_funzione		SMALLINT NOT NULL DEFAULT 0,
+	soc_note			TEXT NOT NULL DEFAULT '',
+	soc_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	soc_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	soc_user			INTEGER,
+	CONSTRAINT soc_cli_fkey FOREIGN KEY (soc_cli) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX soc_desc ON soci (soc_desc, soc_codice);
+CREATE INDEX soc_cliente ON soci (soc_cli, soc_codice);
+
+CREATE OR REPLACE FUNCTION soc_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.soc_desc			= TRIM(NEW.soc_desc);
+	    NEW.soc_luogo_nascita	= TRIM(NEW.soc_luogo_nascita);
+	    NEW.soc_prov_nascita	= TRIM(NEW.soc_prov_nascita);
+	    NEW.soc_cap_nascita		= TRIM(NEW.soc_cap_nascita);
+	    NEW.soc_codfis			= UPPER(TRIM(NEW.soc_codfis));
+	    NEW.soc_note			= TRIM(NEW.soc_note);
+		NEW.soc_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+        	NEW.soc_created_at	= NOW();
+        END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'soc_trigger') THEN
+			CREATE TRIGGER soc_trigger
+			BEFORE INSERT OR UPDATE ON soci
+			FOR EACH ROW
+			EXECUTE PROCEDURE soc_trigger_function();
+		END IF;
+	END
+$$;
 
 
 

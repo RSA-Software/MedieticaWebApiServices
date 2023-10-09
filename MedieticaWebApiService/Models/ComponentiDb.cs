@@ -41,7 +41,7 @@ namespace MedieticaWebApiService.Models
 		private static readonly string JoinQuery = @"
 		SELECT componenti.*, att_desc
 		FROM componenti
-		LEFT JOIN attivita ON cfa_att = att.codice
+		LEFT JOIN attivita ON cfa_att = att_codice
 		";
 
 		public static string GetJoinQuery()
