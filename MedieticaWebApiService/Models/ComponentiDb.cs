@@ -23,6 +23,10 @@ namespace MedieticaWebApiService.Models
 		public DateTime cfa_last_update { get; set; }
 		public int cfa_user { get; set; }
 
+		//
+		// Joined fields
+		//
+		public string att_desc { get; set; }
 
 
 		public ComponentiDb()
@@ -31,7 +35,7 @@ namespace MedieticaWebApiService.Models
 			DbUtils.Initialize(ref cfa_db);
 		}
 
-		private static readonly List<string> InsExcludeFields = new List<string>() { "cfa_codice" };
+		private static readonly List<string> InsExcludeFields = new List<string>() { "cfa_codice", "att_desc" };
 		private static readonly List<string> ExcludeFields = new List<string>() { "att_desc" };
 
 		private static readonly string JoinQuery = @"
