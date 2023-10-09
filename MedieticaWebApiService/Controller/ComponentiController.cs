@@ -13,12 +13,12 @@ namespace MedieticaWebApiService.Controller
 {
 	[EnableCors("*", "*", "*")]
 
-	public class DitteController : ApiController
+	public class ComponentiController : ApiController
 	{
 		[HttpGet]
-		[Route("api/ditte/blank")]
-		[Route("api/ditte/blank/{ditta}")]
-		public DefaultJson<DitteDb> Blank(int ditta = 0)
+		[Route("api/componenti/blank")]
+		[Route("api/componenti/blank/{cliente}")]
+		public DefaultJson<ComponentiDb> Blank(int cliente = 0)
 		{
 			try
 			{
@@ -26,16 +26,16 @@ namespace MedieticaWebApiService.Controller
 				{
 					connection.Open();
 					var cmd = new OdbcCommand { Connection = connection };
-					var json = new DefaultJson<DitteDb>();
+					var json = new DefaultJson<ComponentiDb>();
 
-					cmd.CommandText = DbUtils.QueryAdapt("SELECT COALESCE(MAX(dit_codice),0) AS codice FROM ditte");
+					cmd.CommandText = DbUtils.QueryAdapt("SELECT COALESCE(MAX(cfa_codice),0) AS codice FROM componenti");
 					var reader = cmd.ExecuteReader();
 					while (reader.Read())
 					{
-						var dit = new DitteDb();
-						dit.dit_codice = 1 + reader.GetInt32(reader.GetOrdinal("codice"));
-						if (json.Data == null) json.Data = new List<DitteDb>();
-						json.Data.Add(dit);
+						var cfa = new ComponentiDb();
+						cfa.cfa_codice = 1 + reader.GetInt64(reader.GetOrdinal("codice"));
+						if (json.Data == null) json.Data = new List<ComponentiDb>();
+						json.Data.Add(cfa);
 						json.RecordsTotal++;
 					}
 					reader.Close();
@@ -65,8 +65,8 @@ namespace MedieticaWebApiService.Controller
 
 
 		[HttpGet]
-		[Route("api/ditte/get")]
-		public DefaultJson<DitteDb> GetList(int top = 0, int skip = 0, string orderby = "", string search = "", string filter = "", bool inlinecount = false, bool joined = false)
+		[Route("api/componenti/get")]
+		public DefaultJson<ComponentiDb> GetList(int top = 0, int skip = 0, string orderby = "", string search = "", string filter = "", bool inlinecount = false, bool joined = false)
 		{
 			if (filter.SqlDangerCheck()) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Danger filter value"));
 			if (search.SqlDangerCheck()) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Danger search value"));
@@ -74,12 +74,9 @@ namespace MedieticaWebApiService.Controller
 
 			try
 			{
-				var ditte = DbUtils.GetTokenDitte(Request);
-				var level = DbUtils.GetTokenLevel(Request);
-
 				using (var connection = new OdbcConnection(DbUtils.GetConnectionString()))
 				{
-					var json = new DefaultJson<DitteDb>();
+					var json = new DefaultJson<ComponentiDb>();
 
 					connection.Open();
 					var cmd = new OdbcCommand { Connection = connection };
@@ -90,21 +87,18 @@ namespace MedieticaWebApiService.Controller
 					var total = 0L;
 					if (inlinecount)
 					{
-						if (joined)
-							query = DitteDb.GetCountQuery();
-						else
-							query = "SELECT COUNT(*) FROM ditte";
+						query = "SELECT COUNT(*) FROM componenti";
 						if (string.IsNullOrWhiteSpace(filter))
-							query += " WHERE dit_codice > 0";
+							query += " WHERE cfa_codice > 0";
 						else
-							query += $" WHERE dit_codice > 0 AND ({filter})";
+							query += $" WHERE cfa_codice > 0 AND ({filter})";
 
 						if (!string.IsNullOrWhiteSpace(search))
 						{
 							if (joined)
-								query += $" AND (dit_desc ILIKE {str} OR TRIM(CAST(dit_codice AS VARCHAR(15))) ILIKE {str})";
+								query += $" AND (cfa_desc ILIKE {str} OR TRIM(CAST(cfa_codice AS VARCHAR(15))) ILIKE {str})";
 							else
-								query += $" AND (dit_desc ILIKE {str} OR TRIM(CAST(dit_codice AS VARCHAR(15))) ILIKE {str})";
+								query += $" AND (cfa_desc ILIKE {str} OR TRIM(CAST(cfa_codice AS VARCHAR(15))) ILIKE {str})";
 						}
 
 						cmd.CommandText = DbUtils.QueryAdapt(query);
@@ -112,24 +106,24 @@ namespace MedieticaWebApiService.Controller
 					}
 
 					if (joined)
-						query = DitteDb.GetJoinQuery();
+						query = ComponentiDb.GetJoinQuery();
 					else
-						query = "SELECT * FROM ditte";
+						query = "SELECT * FROM componenti";
 						
 					if (string.IsNullOrWhiteSpace(filter))
-						query += " WHERE dit_codice > 0";
+						query += " WHERE cfa_codice > 0";
 					else 
-						query += " WHERE dit_codice > 0 AND (" + filter + ")";
+						query += " WHERE cfa_codice > 0 AND (" + filter + ")";
 
 					if (!string.IsNullOrWhiteSpace(search))
 					{
 						if (joined)
-							query += $" AND (dit_desc ILIKE {str} OR TRIM(CAST(dit_codice AS VARCHAR(15))) ILIKE {str})";
+							query += $" AND (cfa_desc ILIKE {str} OR TRIM(CAST(cfa_codice AS VARCHAR(15))) ILIKE {str})";
 						else
-							query += $" AND (dit_desc ILIKE {str} OR TRIM(CAST(dit_codice AS VARCHAR(15))) ILIKE {str})";
+							query += $" AND (cfa_desc ILIKE {str} OR TRIM(CAST(cfa_codice AS VARCHAR(15))) ILIKE {str})";
 					}
 					if (string.IsNullOrWhiteSpace(orderby))
-						query += " ORDER BY dit_codice";
+						query += " ORDER BY cfa_codice";
 					else
 						query += " ORDER BY " + orderby;
 					cmd.CommandText = DbUtils.QueryAdapt(query, top, skip);
@@ -137,10 +131,10 @@ namespace MedieticaWebApiService.Controller
 					var reader = cmd.ExecuteReader();
 					while (reader.Read())
 					{
-						var dit = new DitteDb();
-						DbUtils.SqlRead(ref reader, ref dit, joined ? null : DitteDb.GetJoinExcludeFields());
-						if (json.Data == null) json.Data = new List<DitteDb>();
-						json.Data.Add(dit);
+						var cfa = new ComponentiDb();
+						DbUtils.SqlRead(ref reader, ref cfa, joined ? null : ComponentiDb.GetJoinExcludeFields());
+						if (json.Data == null) json.Data = new List<ComponentiDb>();
+						json.Data.Add(cfa);
 						json.RecordsTotal++;
 					}
 					reader.Close();
@@ -174,10 +168,10 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpGet]
-		[Route("api/ditte/get/{codice}")]
-		[Route("api/ditte/get/{codice}/{joined}")]
-		[Route("api/ditte/get/{codice}/{joined}/{fulljoined}")]
-		public DefaultJson<DitteDb> Get(int codice, bool joined = false, bool fulljoined = false)
+		[Route("api/componenti/get/{codice}")]
+		[Route("api/componenti/get/{codice}/{joined}")]
+		[Route("api/componenti/get/{codice}/{joined}/{fulljoined}")]
+		public DefaultJson<ComponentiDb> Get(int codice, bool joined = false, bool fulljoined = false)
 		{
 			try
 			{
@@ -187,39 +181,14 @@ namespace MedieticaWebApiService.Controller
 					var cmd = new OdbcCommand { Connection = connection };
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.VIEW);
 
-					var json = new DefaultJson<DitteDb>();
-					var dit = new DitteDb();
-					if (DitteDb.Search(ref cmd,  codice, ref dit, joined || fulljoined))
+					var json = new DefaultJson<ComponentiDb>();
+					var cfa = new ComponentiDb();
+					if (ComponentiDb.Search(ref cmd,  codice, ref cfa, joined || fulljoined))
 					{
-						dit.img_list = new List<ImgDitteDb>();
-						if (json.Data == null) json.Data = new List<DitteDb>();
-						if (fulljoined)
-						{
-							DbUtils.GetTokenLevel(Request);
-
-							cmd.CommandText = @"
-							SELECT * 
-							FROM imgditte 
-							WHERE img_dit = ? AND img_codice = ? AND Mod(img_formato, 2) = 0
-							ORDER BY img_formato
-							";
-
-							cmd.Parameters.Clear();
-							cmd.Parameters.Add("ditta", OdbcType.Int).Value = dit.dit_codice;
-							cmd.Parameters.Add("codice", OdbcType.Int).Value = dit.dit_codice;
-							var reader = cmd.ExecuteReader();
-							while (reader.Read())
-							{
-								var img = new ImgDitteDb();
-								DbUtils.SqlRead(ref reader, ref img);
-								dit.img_list.Add(img);
-							}
-							reader.Close();
-						}
-						json.Data.Add(dit);
+						if (json.Data == null) json.Data = new List<ComponentiDb>();
+						json.Data.Add(cfa);
 						json.RecordsTotal++;
 					}
-
 					connection.Close();
 					return (json);
 				}
@@ -246,71 +215,10 @@ namespace MedieticaWebApiService.Controller
 				throw new HttpResponseException(Request.CreateResponse<McResponse>(HttpStatusCode.InternalServerError, res));
 			}
 		}
-
-
-		[HttpGet]
-		[Route("api/ditte/getsub/{ditApp}/{cantiere}/{codice}")]
-		public DefaultJson<DitteDb> GetDittaSubappalto(int ditApp, int cantiere, int codice, bool joined = true)
-		{
-			try
-			{
-				using (var connection = new OdbcConnection(DbUtils.GetConnectionString()))
-				{
-					connection.Open();
-					var cmd = new OdbcCommand { Connection = connection };
-
-					var json = new DefaultJson<DitteDb>();
-					var dit = new DitteDb();
-					if (DitteDb.Search(ref cmd, codice, ref dit, joined))
-					{
-						cmd.CommandText = @"
-						SELECT COUNT(*)
-						FROM subappalti 
-						WHERE sub_dit_app = ? AND sub_can_app = ? AND sub_dit_sub = ?";
-
-						cmd.Parameters.Clear();
-						cmd.Parameters.Add("ditta", OdbcType.Int).Value = ditApp;
-						cmd.Parameters.Add("codice", OdbcType.Int).Value = cantiere;
-						cmd.Parameters.Add("ditsub", OdbcType.Int).Value = dit.dit_codice;
-						var tot  = (long)cmd.ExecuteScalar();
-						if (tot > 0)
-						{
-							if (json.Data == null) json.Data = new List<DitteDb>();
-							json.Data.Add(dit);
-							json.RecordsTotal++;
-						}
-					}
-					connection.Close();
-					return (json);
-				}
-			}
-			catch (MCException ex)
-			{
-				var res = new McResponse(ExceptionsType.MC_EXCEPTION, ex.GetError(), ex.Message, ex.GetStackTrace());
-				throw new HttpResponseException(Request.CreateResponse<McResponse>(HttpStatusCode.InternalServerError, res));
-			}
-			catch (OdbcException ex)
-			{
-				var err = 0;
-				if (ex.Errors.Count > 0) err = ex.Errors[0].NativeError;
-				var res = new McResponse(ExceptionsType.ODBC_EXCEPTION, err, ex.Message, ex.StackTrace);
-				throw new HttpResponseException(Request.CreateResponse<McResponse>(HttpStatusCode.InternalServerError, res));
-			}
-			catch (HttpResponseException)
-			{
-				throw;
-			}
-			catch (Exception ex)
-			{
-				var res = new McResponse(ExceptionsType.GENERIC_EXCEPTION, 0, ex.Message, ex.StackTrace);
-				throw new HttpResponseException(Request.CreateResponse<McResponse>(HttpStatusCode.InternalServerError, res));
-			}
-		}
-
 
 		[HttpPost]
-		[Route("api/ditte/post/{ditta}")]
-		public DefaultJson<DitteDb> Post(int ditta, [FromBody] DefaultJson<DitteDb> value)
+		[Route("api/componenti/post")]
+		public DefaultJson<ComponentiDb> Post([FromBody] DefaultJson<ComponentiDb> value)
 		{
 			if (value == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null input value"));
 			if (value.Data == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null Data value"));
@@ -322,53 +230,35 @@ namespace MedieticaWebApiService.Controller
 				{
 					connection.Open();
 					var cmd = new OdbcCommand { Connection = connection };
-					DbUtils.CheckAuthorization(cmd, Request, ditta, Endpoints.DITTE, EndpointsOperations.ADD);
+					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.ADD);
 					var codute = DbUtils.GetTokenUser(Request);
 
-					var dit = new DitteDb();
-					if (!DitteDb.Search(ref cmd, ditta, ref dit)) throw new MCException(MCException.DeletedMsg, MCException.DeletedErr);
-
-					cmd.CommandText = DbUtils.QueryAdapt("SELECT COALESCE(MAX(dit_codice),0) FROM ditte");
-					var last = (int)cmd.ExecuteScalar();
-
-					var json = new DefaultJson<DitteDb>();
-					foreach (var mer in value.Data)
+					var json = new DefaultJson<ComponentiDb>();
+					foreach (var cfa in value.Data)
 					{
-						var val = mer;
+						object obj = null;
+						var val = cfa;
 
-						val.dit_codice = 1 + last;
-						val.dit_rag_soc1 = val.dit_rag_soc1;
-						val.dit_rag_soc2 = val.dit_rag_soc2;
-						val.dit_desc = val.dit_rag_soc1 + " " + val.dit_rag_soc2;
-						val.dit_desc = val.dit_desc.Trim();
-						val.dit_codfis = val.dit_codfis.Trim().ToUpper();
-						val.dit_piva = val.dit_piva.Trim().ToUpper();
-						
+						cfa.cfa_cognome = val.cfa_cognome.Trim();
+						val.cfa_nome = val.cfa_nome.Trim();
+						val.cfa_desc = (val.cfa_cognome + " " + val.cfa_nome).Trim();
+						val.cfa_codfis = val.cfa_codfis.Trim().ToUpper();
+						val.cfa_user = codute;
 
-						//
-						// Aggiungere utente
-						
-						if (string.IsNullOrWhiteSpace(val.dit_rag_soc1))
+						if (string.IsNullOrWhiteSpace(val.cfa_nome))
 						{
-							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Ragione Sociale vuota"));
+							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Nome vuoto"));
 							continue;
 						}
-						if (string.IsNullOrWhiteSpace(val.dit_piva))
+						if (string.IsNullOrWhiteSpace(val.cfa_cognome))
 						{
-							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Partita IVA vuota"));
-							continue;
-						}
-						if (string.IsNullOrWhiteSpace(val.dit_codfis))
-						{
-							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Codice Fiscale vuoto"));
+							if (value.Data.Count == 1) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Cognome vuoto"));
 							continue;
 						}
 
+						DbUtils.SqlWrite(ref cmd, ComponentiDb.Write, DbMessage.DB_INSERT, ref val, ref obj, true);
 
-						DbUtils.SqlWrite(ref cmd, DitteDb.Write, DbMessage.DB_INSERT, ref val, ref codute, true);
-						last = val.dit_codice;
-
-						if (json.Data == null) json.Data = new List<DitteDb>();
+						if (json.Data == null) json.Data = new List<ComponentiDb>();
 						json.Data.Add(val);
 						json.RecordsTotal++;
 					}
@@ -400,8 +290,8 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpPut]
-		[Route("api/ditte/put/{codice}")]
-		public DefaultJson<DitteDb> Put(int codice, [FromBody]DefaultJson<DitteDb> value)
+		[Route("api/componenti/put/{codice}")]
+		public DefaultJson<ComponentiDb> Put(int codice, [FromBody]DefaultJson<ComponentiDb> value)
 		{
 			if (value == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null input value"));
 			if (value.Data == null) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Null Data value"));
@@ -416,27 +306,26 @@ namespace MedieticaWebApiService.Controller
 					var cmd = new OdbcCommand { Connection = connection };
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.UPDATE);
 
-					var dit = value.Data[0];
-					if (dit.dit_codice != codice) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Id risorsa non corrisponde all'id dei dati"));
+					var cfa = value.Data[0];
+					if (cfa.cfa_codice != codice) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Id risorsa non corrisponde all'id dei dati"));
 
-					dit.dit_rag_soc1 = dit.dit_rag_soc1.Trim();
-					dit.dit_rag_soc2 = dit.dit_rag_soc2.Trim();
-					dit.dit_desc = dit.dit_rag_soc1 + " " + dit.dit_rag_soc2;
-					dit.dit_desc = dit.dit_desc.Trim();
-					dit.dit_codfis = dit.dit_codfis.Trim().ToUpper();
-					dit.dit_piva = dit.dit_piva.Trim().ToUpper();
+					cfa.cfa_cognome = cfa.cfa_cognome.Trim();
+					cfa.cfa_nome = cfa.cfa_nome.Trim();
+					cfa.cfa_desc = (cfa.cfa_cognome + " " + cfa.cfa_nome).Trim();
+					cfa.cfa_codfis = cfa.cfa_codfis.Trim().ToUpper();
+					cfa.cfa_user = DbUtils.GetTokenUser(Request);
 
-					if (string.IsNullOrWhiteSpace(dit.dit_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Ragione Sociale vuota"));
-					if (string.IsNullOrWhiteSpace(dit.dit_piva)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Partita IVA vuota"));
-					if (string.IsNullOrWhiteSpace(dit.dit_codfis)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Codice Fiscale vuoto"));
+					if (string.IsNullOrWhiteSpace(cfa.cfa_cognome)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Cognome vuoto"));
+					if (string.IsNullOrWhiteSpace(cfa.cfa_nome)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Nome vuoto"));
 
-					var codute = DbUtils.GetTokenUser(Request);
-					var json = new DefaultJson<DitteDb>();
-					DbUtils.SqlWrite(ref cmd, DitteDb.Write, DbMessage.DB_UPDATE, ref dit, ref codute, true);
+					object obj = null;
+					
+					var json = new DefaultJson<ComponentiDb>();
+					DbUtils.SqlWrite(ref cmd, ComponentiDb.Write, DbMessage.DB_UPDATE, ref cfa, ref obj, true);
 
 					connection.Close();
-					if (json.Data == null) json.Data = new List<DitteDb>();
-					json.Data.Add(dit);
+					if (json.Data == null) json.Data = new List<ComponentiDb>();
+					json.Data.Add(cfa);
 					json.RecordsTotal++;
 
 					return (json);
@@ -466,7 +355,7 @@ namespace MedieticaWebApiService.Controller
 		}
 
 		[HttpDelete]
-		[Route("api/ditte/delete/{codice}")]
+		[Route("api/componenti/delete/{codice}")]
 		public void Delete(int codice)
 		{
 			try
@@ -477,11 +366,11 @@ namespace MedieticaWebApiService.Controller
 					var cmd = new OdbcCommand { Connection = connection };
 					DbUtils.CheckAuthorization(cmd, Request, 0, Endpoints.DITTE, EndpointsOperations.DELETE);
 
-					var val = new DitteDb();
-					if (!DitteDb.Search(ref cmd, codice, ref val)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.NotFound, "Risorsa non trovata"));
+					var val = new ComponentiDb();
+					if (!ComponentiDb.Search(ref cmd, codice, ref val)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.NotFound, "Risorsa non trovata"));
 
-					int codute = 0;
-					DbUtils.SqlWrite(ref cmd, DitteDb.Write, DbMessage.DB_DELETE, ref val, ref codute);
+					object obj = null;
+					DbUtils.SqlWrite(ref cmd, ComponentiDb.Write, DbMessage.DB_DELETE, ref val, ref obj);
 
 					connection.Close();
 				}

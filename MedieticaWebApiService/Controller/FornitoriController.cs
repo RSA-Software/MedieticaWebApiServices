@@ -340,7 +340,7 @@ namespace MedieticaWebApiService.Controller
 					forn.for_piva = forn.for_piva.Trim().ToUpper();
 					forn.for_user = DbUtils.GetTokenUser(Request);
 
-					if (string.IsNullOrWhiteSpace(forn.for_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Rgione Sociale /Cognome vuota"));
+					if (string.IsNullOrWhiteSpace(forn.for_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Ragione Sociale /Cognome vuota"));
 
 					object obj = null;
 					

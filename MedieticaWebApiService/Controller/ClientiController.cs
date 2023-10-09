@@ -360,7 +360,7 @@ namespace MedieticaWebApiService.Controller
 					cli.cli_piva = cli.cli_piva.Trim().ToUpper();
 					cli.cli_user = DbUtils.GetTokenUser(Request);
 
-					if (string.IsNullOrWhiteSpace(cli.cli_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Rgione Sociale /Cognome vuota"));
+					if (string.IsNullOrWhiteSpace(cli.cli_rag_soc1)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Ragione Sociale /Cognome vuota"));
 					if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_PRIVATI && string.IsNullOrWhiteSpace(cli.cli_rag_soc2)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Nome vuoto"));
 					if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_IMPRESE && string.IsNullOrWhiteSpace(cli.cli_piva)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Partita IVA vuota"));
 					if (cli.cli_tipo == (short)ClientiTipo.CLI_TYPE_PRIVATI && string.IsNullOrWhiteSpace(cli.cli_codfis)) throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.BadRequest, "Codice Fiscale vuoto"));
