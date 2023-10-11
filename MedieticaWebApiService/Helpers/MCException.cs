@@ -124,6 +124,9 @@ namespace MedieticaWebApiService.Helpers
 		public static readonly string SedeMsg = "Il codice della Sede non è valido o disponibile.";
 		public static readonly string CheckListMsg = "Il codice della CheckList non è valido o disponibile.";
 		public static readonly string ClientiMsg = "Il codice del Cliente non è valido o disponibile.";
+		public static readonly string AttivitaMsg = "Il codice dell' Attività non è valido o disponibile.";
+		public static readonly string PoteriMsg = "Il codice del Potere non è valido o disponibile.";
+		public static readonly string CaricheMsg = "Il codice della Carica non è valido o disponibile.";
 
 		public static readonly int NoErr = 0;
 		public static readonly int LockedErr = -10;
@@ -189,6 +192,9 @@ namespace MedieticaWebApiService.Helpers
 		public static readonly int SedeErr = -143;
 		public static readonly int CheckListErr = -144;
 		public static readonly int ClientiErr = -145;
+		public static readonly int AttivitaErr = -146;
+		public static readonly int PoteriErr = -147;
+		public static readonly int CaricheErr = -148;
 
 		private readonly int _error;
 		private readonly string _stackTrace;

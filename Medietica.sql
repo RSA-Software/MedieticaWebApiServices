@@ -1532,6 +1532,218 @@ DO $$
 $$;
 
 
+/*
+*	Creazione Tabella poteri
+*/
+CREATE TABLE IF NOT EXISTS poteri
+(
+	pot_codice			BIGSERIAL PRIMARY KEY,
+	pot_desc			VARCHAR (100) NOT NULL DEFAULT '',
+	pot_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pot_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	pot_user			INTEGER
+);
+CREATE INDEX IF NOT EXISTS pot_desc ON poteri (pot_desc, pot_codice);
+
+CREATE OR REPLACE FUNCTION pot_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.pot_desc		= TRIM(NEW.pot_desc);
+		NEW.pot_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.pot_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'pot_trigger') THEN
+			CREATE TRIGGER pot_trigger
+			BEFORE INSERT OR UPDATE ON poteri
+			FOR EACH ROW
+			EXECUTE PROCEDURE pot_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella cariche
+*/
+CREATE TABLE IF NOT EXISTS cariche
+(
+	car_codice			BIGSERIAL PRIMARY KEY,
+	car_desc			VARCHAR (100) NOT NULL DEFAULT '',
+	car_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	car_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	car_user			INTEGER
+);
+CREATE INDEX IF NOT EXISTS car_desc ON cariche (car_desc, car_codice);
+
+CREATE OR REPLACE FUNCTION car_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.car_desc		= TRIM(NEW.car_desc);
+		NEW.car_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+           NEW.car_created_at	= NOW();
+    	END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'car_trigger') THEN
+			CREATE TRIGGER car_trigger
+			BEFORE INSERT OR UPDATE ON cariche
+			FOR EACH ROW
+			EXECUTE PROCEDURE car_trigger_function();
+		END IF;
+	END
+$$;
+
+
+/*
+*	Creazione Tabella rappresentanti
+*/
+CREATE TABLE IF NOT EXISTS rappresentanti
+(
+	rap_codice 	    	BIGSERIAL PRIMARY KEY,
+	rap_cli				BIGINT,
+	rap_pot				BIGINT,
+	rap_car				BIGINT,
+	rap_cognome 		VARCHAR (50) NOT NULL DEFAULT '',
+	rap_nome	 		VARCHAR (50) NOT NULL DEFAULT '',
+	rap_desc			VARCHAR (101) NOT NULL DEFAULT '',
+	rap_data_nascita	DATE,
+	rap_luogo_nascita	VARCHAR (100) NOT NULL DEFAULT '',
+	rap_prov_nascita	VARCHAR (2) NOT NULL DEFAULT '',
+	rap_cap_nascita		VARCHAR (5) NOT NULL DEFAULT '',
+	rap_codfis			VARCHAR (16) NOT NULL DEFAULT '',
+	rap_esposto			SMALLINT NOT NULL DEFAULT 0,
+	rap_quota			DOUBLE PRECISION NOT NULL DEFAULT 0,
+	rap_scadenza		DATE,
+	rap_fino_a_revoca	SMALLINT NOT NULL DEFAULT 0,
+	rap_note			TEXT NOT NULL DEFAULT '',
+	rap_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	rap_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	rap_user			INTEGER,
+	CONSTRAINT rap_cli_fkey FOREIGN KEY (rap_cli) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE,
+	CONSTRAINT rap_pot_fkey FOREIGN KEY (rap_pot) REFERENCES poteri (pot_codice) ON UPDATE CASCADE ON DELETE RESTRICT,
+	CONSTRAINT rap_car_fkey FOREIGN KEY (rap_car) REFERENCES cariche (car_codice) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE INDEX IF NOT EXISTS rap_desc ON rappresentanti (rap_desc, rap_codice);
+CREATE INDEX IF NOT EXISTS rap_cliente ON rappresentanti (rap_cli, rap_codice);
+CREATE INDEX IF NOT EXISTS rap_poteri ON rappresentanti (rap_pot, rap_codice);
+CREATE INDEX IF NOT EXISTS rap_cariche ON rappresentanti (rap_car, rap_codice);
+
+CREATE OR REPLACE FUNCTION rap_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.rap_cognome			= TRIM(NEW.rap_cognome);
+	    NEW.rap_nome			= TRIM(NEW.rap_nome);
+	    NEW.rap_desc			= TRIM(CONCAT(TRIM(NEW.rap_cognome), ' ', TRIM(NEW.rap_nome)));
+	    NEW.rap_luogo_nascita	= TRIM(NEW.rap_luogo_nascita);
+	    NEW.rap_prov_nascita	= TRIM(NEW.rap_prov_nascita);
+	    NEW.rap_cap_nascita		= TRIM(NEW.rap_cap_nascita);
+	    NEW.rap_codfis			= UPPER(TRIM(NEW.rap_codfis));
+	    NEW.rap_note			= TRIM(NEW.rap_note);
+		NEW.rap_last_update	= NOW();
+	    IF NEW.rap_car = 0 THEN
+			NEW.rap_car = NULL;
+		END IF;
+	    IF NEW.rap_pot = 0 THEN
+			NEW.rap_pot = NULL;
+		END IF;
+   	    IF  (TG_OP = 'INSERT') THEN
+        	NEW.rap_created_at	= NOW();
+        END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'rap_trigger') THEN
+			CREATE TRIGGER rap_trigger
+			BEFORE INSERT OR UPDATE ON rappresentanti
+			FOR EACH ROW
+			EXECUTE PROCEDURE rap_trigger_function();
+		END IF;
+	END
+$$;
+
+/*
+*	Creazione Tabella commercialisti
+*/
+CREATE TABLE IF NOT EXISTS commercialisti
+(
+	cmm_codice 	    	BIGSERIAL PRIMARY KEY,
+	cmm_cli				BIGINT,
+	cmm_cognome 		VARCHAR (50) NOT NULL DEFAULT '',
+	cmm_nome	 		VARCHAR (50) NOT NULL DEFAULT '',
+	cmm_desc			VARCHAR (101) NOT NULL DEFAULT '',
+	cmm_citta			VARCHAR (100) NOT NULL DEFAULT '',
+	cmm_indirizzo		VARCHAR (100) NOT NULL DEFAULT '',
+	cmm_prov			VARCHAR (2) NOT NULL DEFAULT '',
+	cmm_cap				VARCHAR (5) NOT NULL DEFAULT '',
+	cmm_tel1			VARCHAR (15) NOT NULL DEFAULT '',
+	cmm_tel3			VARCHAR (15) NOT NULL DEFAULT '',
+	cmm_cell			VARCHAR (15) NOT NULL DEFAULT '',
+	cmm_email 			VARCHAR(100) NOT NULL DEFAULT '',
+	cmm_created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cmm_last_update		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	cmm_user			INTEGER,
+	CONSTRAINT cmm_cli_fkey FOREIGN KEY (cmm_cli) REFERENCES clienti (cli_codice) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS cmm_desc ON commercialisti (cmm_desc, cmm_codice);
+CREATE INDEX IF NOT EXISTS cmm_cliente ON commercialisti (cmm_cli, cmm_codice);
+
+CREATE OR REPLACE FUNCTION cmm_trigger_function()
+RETURNS TRIGGER AS $$
+	BEGIN
+	    NEW.cmm_cognome			= TRIM(NEW.cmm_cognome);
+	    NEW.cmm_nome			= TRIM(NEW.cmm_nome);
+	    NEW.cmm_desc			= TRIM(CONCAT(TRIM(NEW.cmm_cognome), ' ', TRIM(NEW.cmm_nome)));
+	    NEW.cmm_indirizzo		= TRIM(NEW.cmm_indirizzo);
+	    NEW.cmm_citta			= TRIM(NEW.cmm_citta);
+	    NEW.cmm_prov			= TRIM(NEW.cmm_prov);
+	    NEW.cmm_cap				= TRIM(NEW.cmm_cap);
+	    NEW.cmm_tel1			= TRIM(NEW.cmm_tel1);
+	    NEW.cmm_tel2			= TRIM(NEW.cmm_tel2);
+	    NEW.cmm_cell			= TRIM(NEW.cmm_cell);
+		NEW.cmm_last_update	= NOW();
+   	    IF  (TG_OP = 'INSERT') THEN
+        	NEW.cmm_created_at	= NOW();
+        END IF;
+		RETURN NEW;
+	END;
+$$ language 'plpgsql';
+
+DO $$
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'cmm_trigger') THEN
+			CREATE TRIGGER cmm_trigger
+			BEFORE INSERT OR UPDATE ON commercialisti
+			FOR EACH ROW
+			EXECUTE PROCEDURE cmm_trigger_function();
+		END IF;
+	END
+$$;
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -55,7 +55,6 @@ namespace MedieticaWebApiService.Models
 		}
 
 
-
 		public static bool Search(ref OdbcCommand cmd, long codice, ref ComponentiDb cnt, bool joined = false,  bool writeLock = false)
 		{
 			if (cnt != null) DbUtils.Initialize(ref cnt);
@@ -67,7 +66,7 @@ namespace MedieticaWebApiService.Models
 				{
 					connection.Open();
 					var command = new OdbcCommand { Connection = connection };
-					return Search(ref command, codice, ref cnt, writeLock);
+					return Search(ref command, codice, ref cnt, joined, writeLock);
 				}
 			}
 
@@ -108,6 +107,8 @@ namespace MedieticaWebApiService.Models
 				ClientiDb cli = null;
 				if (cfa.cfa_cli == 0 || !ClientiDb.Search(ref cmd, cfa.cfa_cli, ref cli)) throw new MCException(MCException.ClientiMsg, MCException.ClientiErr);
 
+				AttivitaDb att = null;
+				if (!AttivitaDb.Search(ref cmd, cfa.cfa_att, ref att)) throw new MCException(MCException.AttivitaMsg, MCException.AttivitaErr);
 			}
 
 			switch (msg)

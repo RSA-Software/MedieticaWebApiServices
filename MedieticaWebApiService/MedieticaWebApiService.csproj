@@ -217,6 +217,11 @@
     <Compile Include="Controller\Aanac\AttestazioniSoaController.cs" />
     <Compile Include="Controller\Aanac\BandiCigController.cs" />
     <Compile Include="Controller\AllegatiController.cs" />
+    <Compile Include="Controller\CaricheController.cs" />
+    <Compile Include="Controller\CommercialistiController.cs" />
+    <Compile Include="Controller\RappresentantiController.cs" />
+    <Compile Include="Controller\PoteriController.cs" />
+    <Compile Include="Controller\SociController.cs" />
     <Compile Include="Controller\ComponentiController.cs" />
     <Compile Include="Controller\FornitoriController.cs" />
     <Compile Include="Controller\ClientiController.cs" />
@@ -298,6 +303,11 @@
     <Compile Include="Models\AllegatiDb.cs" />
     <Compile Include="Models\Anac\AttestazioniSoaDb.cs" />
     <Compile Include="Models\Anac\BandiCigDb.cs" />
+    <Compile Include="Models\CarcicheDb.cs" />
+    <Compile Include="Models\CommercialistiDb.cs" />
+    <Compile Include="Models\RappresentatntiDb.cs" />
+    <Compile Include="Models\PoteriDb.cs" />
+    <Compile Include="Models\SociDb.cs" />
     <Compile Include="Models\ComponentiDb.cs" />
     <Compile Include="Models\FornitoriDb.cs" />
     <Compile Include="Models\ClientiDb.cs" />
