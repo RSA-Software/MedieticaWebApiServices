@@ -218,6 +218,7 @@
     <Compile Include="Controller\Aanac\BandiCigController.cs" />
     <Compile Include="Controller\AllegatiController.cs" />
     <Compile Include="Controller\CaricheController.cs" />
+    <Compile Include="Controller\PraticheController.cs" />
     <Compile Include="Controller\CommercialiController.cs" />
     <Compile Include="Controller\IncarichiController.cs" />
     <Compile Include="Controller\GestoriController.cs" />
@@ -308,6 +309,7 @@
     <Compile Include="Models\Anac\BandiCigDb.cs" />
     <Compile Include="Models\CarcicheDb.cs" />
     <Compile Include="Models\CommercialiDb.cs" />
+    <Compile Include="Models\PraticheDb.cs" />
     <Compile Include="Models\IncarichiDb.cs" />
     <Compile Include="Models\GestoriDb.cs" />
     <Compile Include="Models\CommercialistiDb.cs" />
